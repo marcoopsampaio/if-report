@@ -2,9 +2,13 @@
 title: "Data sources and cleaning"
 output:
   html_document:
-    toc: true
-    number_sections: true
     code_folding: show
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
 ---
 
 Before we start we set up some things
@@ -17,14 +21,15 @@ setwd("/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/")
 This document describes the source data that was gathered from the FCT website regarding the portuguese investigator calls for the period 2013-2015. For further information see https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/estatisticas.phtml.pt
 
 # Utilities
-First I will design a few useful functions. I Want:
+First I will design a few useful functions. 
 
-1. A master function that stats and creates a raw_data directory and a log file to keep information on when downloads were made and sub-directories and files were created.
+1. A master function that stats and creates a data directory and a log file to keep information on when downloads were made and sub-directories and files were created.
 ```{r}
   # This function uses the working directory as reference
   make_data_directory <- function(directory_name){
     if(!file.exists(directory_name) & directory_name != "./" & directory_name != "." & directory_name != ""){
         dir.create(directory_name)
+      dir_log <- file(paste(directory_name,"/directory.log",sep=""),"a")
       write(paste("Directory ",as.character(directory_name)," was created at ",system("date -u", intern = TRUE)), file = dir_log, append = TRUE)
         close(dir_log)
     }
@@ -76,6 +81,7 @@ First I will design a few useful functions. I Want:
     rel_path_file
   }
 ```
+
 
 # Raw data import and cleaning
 We will keep all the raw data out of the repository at this relative location:
@@ -323,19 +329,45 @@ So there are only a few cases of changes in the mark of the candidate after the 
   side_by_side_2013_changes$Grade3-side_by_side_2013_changes$Grade1
 ```
 
-Finally we want to export a single file with all the information. We make a data frame ordered by Ref with the candidate that was missing excluded
+Finally we want to export a single file with all the information. But we are missing the ranking information which is implicit in the file and can be relevant. So firt we add a column 
+```{r}
+  data1_xlsx_2013$Rank1 = 1:(dim(data1_xlsx_2013)[1])
+  head(data1_xlsx_2013)
+  data3_temp_2013$Rank3 = 1:(dim(data3_temp_2013)[1])
+  head(data3_temp_2013)
+```
+
+We make a data frame ordered by Ref with the candidate that was missing excluded
 ```{r}
   data_2013 <- data1_xlsx_2013[order(data1_xlsx_2013$Ref),c("Ref","Name","Grade1")]
   data_2013$Grade3<-data3_temp_2013[order(data3_temp_2013$Ref),][,"Grade3"]
   data_2013$Status1 <- data1_xlsx_2013[order(data1_xlsx_2013$Ref),"Status1"]
   data_2013$Status3<-data3_temp_2013[order(data3_temp_2013$Ref),][,"Status3"]
+  data_2013$Rank1 <- data1_xlsx_2013[order(data1_xlsx_2013$Ref),"Rank1"]
+  data_2013$Rank3<-data3_temp_2013[order(data3_temp_2013$Ref),][,"Rank3"]
   head(data_2013)
 ```
-Now export TO DO!!!! MAKE GENERIC FUNCTIONS
-.........
 
-Q: The mistakes seem to always disfavour candidates?
+**EXPORT**
+I will write all clean data in the directory:
+```{r}
+  clean_data_dir <- "clean_data"
+```
 
+For the 2013 data I will use
+```{r}
+  clean_data_subdir2013 <- "2013"
+```
+Now we create the directory tree:
+```{r}
+  make_data_sub_directory(clean_data_dir,clean_data_subdir2013)
+```
+And export the clean data file
+```{r}
+  write.csv(data_2013,paste(clean_data_dir,"/",clean_data_subdir2013,"/clean_data2013.csv", sep = ""),row.names = FALSE)
+```
+
+Q: The mistakes seem to always disfavour candidates? (i.e. the score goes up).
 
 
 ## IF competition 2014
@@ -347,6 +379,9 @@ In this year and following the competition became a two stage process. The sub-d
 
 ### Stage 1
 #### Before appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file1_stage1_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_1stStageResultsAfterEvaluation-locked.xlsx"
@@ -357,9 +392,52 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file1_stage1_url_2014,file1_stage1_name_2014)
+  file1_stage1_rel_path_2014<-make_data_file_download(raw_dir, sub_dir2014, file1_stage1_url_2014,file1_stage1_name_2014)
 ```
+
+**CLEANUP**
+
+Now we load the file
+```{r}
+  data1_stage1_xlsx_2014 <- read.xlsx(file1_stage1_rel_path_2014,sheetIndex = 1,startRow = 3, endRow = 1401)[,1:5]
+```
+The structure is
+```{r}
+  str(data1_stage1_xlsx_2014)
+  head(data1_stage1_xlsx_2014)
+  tail(data1_stage1_xlsx_2014)
+```
+The levels for the Reference and Name seem OK because they are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data1_stage1_xlsx_2014) <-c("Ref","Name","Host","Grade1","Status1")
+```
+Let us check the levels for Status and Final.Grade:
+```{r}
+  levels(data1_stage1_xlsx_2014$Status1)
+  levels(data1_stage1_xlsx_2014$Grade1)
+```
+For a uniform notation we rename the levels for the status
+```{r}
+  levels(data1_stage1_xlsx_2014$Status1)[1]<- "Yes"
+  levels(data1_stage1_xlsx_2014$Status1)[2]<- "No"
+```
+And the values for the grade to numeric
+```{r}
+  data1_stage1_xlsx_2014$Grade1 <- as.numeric(as.character(data1_stage1_xlsx_2014$Grade1))
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data1_stage1_xlsx_2014$Grade1,breaks = seq(0.25,9.75,by = 0.5))
+```
+As a consistency check let us see if the the candidates are ordered correctly (removing the NA values)
+```{r}
+  unique(data1_stage1_xlsx_2014$Grade1[!is.na(data1_stage1_xlsx_2014$Grade1)]-sort(data1_stage1_xlsx_2014$Grade1[!is.na(data1_stage1_xlsx_2014$Grade1)],decreasing=TRUE))
+```
+
 #### After appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file2_stage1_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_1stStageFinalResults-locked.xls"
@@ -370,26 +448,95 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file2_stage1_url_2014,file2_stage1_name_2014)
+  file2_stage1_rel_path_2014<-make_data_file_download(raw_dir, sub_dir2014, file2_stage1_url_2014,file2_stage1_name_2014)
+```
+
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data2_stage1_xlsx_2014 <- read.xlsx(file2_stage1_rel_path_2014,sheetIndex = 1,startRow = 3, endRow = 1401)[,1:5]
+```
+The structure is
+```{r}
+  str(data2_stage1_xlsx_2014)
+```
+The levels for the Reference and Name seem OK because they are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data2_stage1_xlsx_2014) <-c("Ref","Name","Host","Grade2","Status2")
+```
+Let us check the levels for Status and Final.Grade:
+```{r}
+  levels(data2_stage1_xlsx_2014$Status2)
+  levels(data2_stage1_xlsx_2014$Grade2)
+```
+For a uniform notation we rename the levels for the status
+```{r}
+  levels(data2_stage1_xlsx_2014$Status2)[1]<- "Yes"
+  levels(data2_stage1_xlsx_2014$Status2)[2]<- "No"
+```
+And the values for the grade to numeric
+```{r}
+  data2_stage1_xlsx_2014$Grade2 <- as.numeric(as.character(data2_stage1_xlsx_2014$Grade2))
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data2_stage1_xlsx_2014$Grade2,breaks = seq(0.25,9.75,by = 0.5))
+```
+As a consistency check let us see if the the candidates are ordered correctly (removing the NA values)
+```{r}
+  unique(data2_stage1_xlsx_2014$Grade2[!is.na(data2_stage1_xlsx_2014$Grade2)]-sort(data2_stage1_xlsx_2014$Grade2[!is.na(data2_stage1_xlsx_2014$Grade2)],decreasing=TRUE))
 ```
 
 #### After complaint
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file3_stage1_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_1stStageFinalList-locked.xlsx"
 ```
 and chose the filename
 ```{r, warning=FALSE}
-  file3_stage1_name_2014 <- "2014-file2-stage1-all_candidates_after_complaint.xlsx"
+  file3_stage1_name_2014 <- "2014-file3-stage1-all_candidates_after_complaint.xlsx"
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file3_stage1_url_2014,file3_stage1_name_2014)
+  file3_stage1_rel_path_2014<-make_data_file_download(raw_dir, sub_dir2014, file3_stage1_url_2014,file3_stage1_name_2014)
 ```
 
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data3_stage1_xlsx_2014 <- read.xlsx(file3_stage1_rel_path_2014,sheetIndex = 1,startRow = 3, endRow = 517)[,1:4]
+```
+The structure is
+```{r}
+  str(data3_stage1_xlsx_2014)
+```
+The levels for the Reference and Name seem OK because they are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data3_stage1_xlsx_2014) <-c("Ref","Name","Host","Grade3")
+```
+Let us check the values:
+```{r}
+  unique(data3_stage1_xlsx_2014$Grade3)
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data3_stage1_xlsx_2014$Grade3,breaks = seq(6.25,9.75,by = 0.5))
+```
+As a consistency check let us see if the the candidates are ordered correctly
+```{r}
+  unique(data3_stage1_xlsx_2014$Grade3-sort(data3_stage1_xlsx_2014$Grade3,decreasing=TRUE))
+```
 
 ### Stage 2 
 #### Before appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file1_stage2_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_2ndStageResults-locked.xls"
@@ -400,10 +547,119 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file1_stage2_url_2014,file1_stage2_name_2014)
+  file1_stage2_rel_path_2014<-make_data_file_download(raw_dir, sub_dir2014, file1_stage2_url_2014,file1_stage2_name_2014)
+```
+
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data1_stage2_xlsx_2014_global <- read.xlsx(file1_stage2_rel_path_2014,sheetIndex = 1,startRow = 7, endRow = 519)[,1:4]
+```
+The structure is
+```{r}
+  str(data1_stage2_xlsx_2014_global)
+```
+The levels for the Reference and Name seem OK because two candidates quit the competition and the remaining 512 are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data1_stage2_xlsx_2014_global) <-c("Ref","Name","Host","Grade4")
+```
+Let us check the values:
+```{r}
+  unique(data1_stage2_xlsx_2014_global$Grade4)
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data1_stage2_xlsx_2014_global$Grade4,breaks = seq(4.5,9.5,by = 1))
+```
+As a consistency check let us see if the the candidates are ordered correctly
+```{r}
+  unique(data1_stage2_xlsx_2014_global$Grade4-sort(data1_stage2_xlsx_2014_global$Grade4,decreasing=TRUE))
+```
+
+But now, in this stage we have information for the various individual panels with detailed scores. Let us load this information. To make the process less cumbersome we first create a function
+
+```{r}
+  load_panel2014<- function(round,input_file,panel_name,sheet_num, start_row, end_row, ncolumns){
+    # read data
+    data <- read.xlsx(input_file,sheetIndex = sheet_num,startRow = start_row, endRow = end_row)[,1:ncolumns]
+    # Rename columns
+    colnames(data)<-c("Ref","Name","Host",paste("WGrade",round,sep = ""),paste("Grade",round,sep = ""),paste("Status",round,sep = ""))
+    # Remove the level "Yes*" to be "Yes" and "*" to "Reserve"
+    levels(data[[paste("Status",round,sep = "")]])<-c("Reserve","No","Yes","Yes")
+    data$Panel <- rep(panel_name,dim(data)[1])
+    data[[paste("PanelRank",round,sep = "")]]<- 1:(dim(data)[1])
+    # Return data frame after checks
+    data
+  }
+```
+
+** Exact Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2014_sci <-load_panel2014("4",file1_stage2_rel_path_2014,"sci",2,7,106,6)
+  str(data1_stage2_xlsx_2014_sci)
+  head(data1_stage2_xlsx_2014_sci)
+  tail(data1_stage2_xlsx_2014_sci)
+```
+
+** Engineering and Technology **
+  
+```{r}
+  data1_stage2_xlsx_2014_eng <-load_panel2014("4",file1_stage2_rel_path_2014,"eng",3,7,96,6)
+  str(data1_stage2_xlsx_2014_eng)
+  head(data1_stage2_xlsx_2014_eng)
+  tail(data1_stage2_xlsx_2014_eng)
+```
+
+** Medical Health Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2014_med <-load_panel2014("4",file1_stage2_rel_path_2014,"med",4,7,71,6)
+  str(data1_stage2_xlsx_2014_med)
+  head(data1_stage2_xlsx_2014_med)
+  tail(data1_stage2_xlsx_2014_med)
+```
+
+** Environmental Agricultural Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2014_env <-load_panel2014("4",file1_stage2_rel_path_2014,"env",5,7,75,6)
+  str(data1_stage2_xlsx_2014_env)
+  head(data1_stage2_xlsx_2014_env)
+  tail(data1_stage2_xlsx_2014_env)
+```
+
+** Natural Animal Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2014_nat <-load_panel2014("4",file1_stage2_rel_path_2014,"nat",6,7,93,6)
+  str(data1_stage2_xlsx_2014_nat)
+  head(data1_stage2_xlsx_2014_nat)
+  tail(data1_stage2_xlsx_2014_nat)
+```
+
+** Social Sciences **
+NOTE: In this panel I have removed the last candidate that quit the competition.
+```{r}
+  data1_stage2_xlsx_2014_soc <-load_panel2014("4",file1_stage2_rel_path_2014,"soc",7,7,66,6)
+  str(data1_stage2_xlsx_2014_soc)
+  head(data1_stage2_xlsx_2014_soc)
+  tail(data1_stage2_xlsx_2014_soc)
+```
+
+** Humanities **
+```{r}
+  data1_stage2_xlsx_2014_hum <-load_panel2014("4",file1_stage2_rel_path_2014,"hum",8,8,55,6)
+  str(data1_stage2_xlsx_2014_hum)
+  head(data1_stage2_xlsx_2014_hum)
+  tail(data1_stage2_xlsx_2014_hum)
 ```
 
 #### After appeal
+
+** DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file2_stage2_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_2ndStageResults_AfterAppeals_Locked-230615.xlsx"
@@ -414,10 +670,106 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file2_stage2_url_2014,file2_stage2_name_2014)
+  file2_stage2_rel_path_2014 <- make_data_file_download(raw_dir, sub_dir2014, file2_stage2_url_2014,file2_stage2_name_2014)
+```
+
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data2_stage2_xlsx_2014_global <- read.xlsx(file2_stage2_rel_path_2014,sheetIndex = 1,startRow = 6, endRow = 518)[,1:4]
+```
+The structure is
+```{r}
+  str(data2_stage2_xlsx_2014_global)
+```
+The levels for the Reference and Name seem OK because two candidates quit the competition and the remaining 512 are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data2_stage2_xlsx_2014_global) <-c("Ref","Name","Host","Grade5")
+```
+Let us check the values:
+```{r}
+  unique(data2_stage2_xlsx_2014_global$Grade5)
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data2_stage2_xlsx_2014_global$Grade5,breaks = seq(4.5,9.5,by = 1))
+```
+As a consistency check let us see if the the candidates are ordered correctly
+```{r}
+  unique(data2_stage2_xlsx_2014_global$Grade5-sort(data2_stage2_xlsx_2014_global$Grade5,decreasing=TRUE))
+```
+
+But now, in this stage we have information for the various individual panels with detailed scores. Let us load this information. To make the process less cumbersome we first create a function
+
+** Exact Sciences **
+  
+```{r}
+  data2_stage2_xlsx_2014_sci <-load_panel2014("5",file2_stage2_rel_path_2014,"sci",2,7,106,6)
+  str(data2_stage2_xlsx_2014_sci)
+  head(data2_stage2_xlsx_2014_sci)
+  tail(data2_stage2_xlsx_2014_sci)
+  levels(data2_stage2_xlsx_2014_sci$Status5)
+```
+
+** Engineering and Technology **
+  
+```{r}
+  data2_stage2_xlsx_2014_eng <-load_panel2014("5",file2_stage2_rel_path_2014,"eng",3,7,96,6)
+  str(data2_stage2_xlsx_2014_eng)
+  head(data2_stage2_xlsx_2014_eng)
+  tail(data2_stage2_xlsx_2014_eng)
+```
+
+** Medical Health Sciences **
+  
+```{r}
+  data2_stage2_xlsx_2014_med <-load_panel2014("5",file2_stage2_rel_path_2014,"med",4,7,71,6)
+  str(data2_stage2_xlsx_2014_med)
+  head(data2_stage2_xlsx_2014_med)
+  tail(data2_stage2_xlsx_2014_med)
+```
+
+** Environmental Agricultural Sciences **
+  
+```{r}
+  data2_stage2_xlsx_2014_env <-load_panel2014("5",file2_stage2_rel_path_2014,"env",5,7,75,6)
+  str(data2_stage2_xlsx_2014_env)
+  head(data2_stage2_xlsx_2014_env)
+  tail(data2_stage2_xlsx_2014_env)
+```
+
+** Natural Animal Sciences **
+  
+```{r}
+  data2_stage2_xlsx_2014_nat <-load_panel2014("5",file2_stage2_rel_path_2014,"nat",6,7,93,6)
+  str(data2_stage2_xlsx_2014_nat)
+  head(data2_stage2_xlsx_2014_nat)
+  tail(data2_stage2_xlsx_2014_nat)
+```
+
+** Social Sciences **
+NOTE: In this panel I have removed the last candidate that quit the competition.
+```{r}
+  data2_stage2_xlsx_2014_soc <-load_panel2014("5",file2_stage2_rel_path_2014,"soc",7,7,66,6)
+  str(data2_stage2_xlsx_2014_soc)
+  head(data2_stage2_xlsx_2014_soc)
+  tail(data2_stage2_xlsx_2014_soc)
+```
+
+** Humanities **
+NOTE: Some candidate was eliminated after appeal.
+```{r}
+  data2_stage2_xlsx_2014_hum <-load_panel2014("5",file2_stage2_rel_path_2014,"hum",8,7,54,6)
+  str(data2_stage2_xlsx_2014_hum)
+  head(data2_stage2_xlsx_2014_hum)
+  tail(data2_stage2_xlsx_2014_hum)
 ```
 
 #### Final results
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file3_stage2_url_2014 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2014/docs/IF2014_2ndStageFinalResults-locked.xlsx"
@@ -428,9 +780,374 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2014, file3_stage2_url_2014,file3_stage2_name_2014)
+  file3_stage2_rel_path_2014<-make_data_file_download(raw_dir, sub_dir2014, file3_stage2_url_2014,file3_stage2_name_2014)
 ```
 
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data3_stage2_xlsx_2014_global <- read.xlsx(file3_stage2_rel_path_2014,sheetIndex = 1,startRow = 6, endRow = 518)[,1:4]
+```
+The structure is
+```{r}
+  str(data3_stage2_xlsx_2014_global)
+```
+The levels for the Reference and Name seem OK because two candidates quit the competition and the remaining 512 are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data3_stage2_xlsx_2014_global) <-c("Ref","Name","Host","Grade6")
+```
+Let us check the values:
+```{r}
+  unique(data3_stage2_xlsx_2014_global$Grade6)
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data3_stage2_xlsx_2014_global$Grade6,breaks = seq(4.5,9.5,by = 1))
+```
+As a consistency check let us see if the the candidates are ordered correctly
+```{r}
+  unique(data3_stage2_xlsx_2014_global$Grade6-sort(data3_stage2_xlsx_2014_global$Grade6,decreasing=TRUE))
+```
+
+But now, in this stage we have information for the various individual panels with detailed scores. Let us load this information. To make the process less cumbersome we first create a function
+
+** Exact Sciences **
+  
+```{r}
+  data3_stage2_xlsx_2014_sci <-load_panel2014("6",file3_stage2_rel_path_2014,"sci",2,6,105,6)
+  str(data3_stage2_xlsx_2014_sci)
+  head(data3_stage2_xlsx_2014_sci)
+  tail(data3_stage2_xlsx_2014_sci)
+  levels(data3_stage2_xlsx_2014_sci$Status6)
+```
+
+** Engineering and Technology **
+  
+```{r}
+  data3_stage2_xlsx_2014_eng <-load_panel2014("6",file3_stage2_rel_path_2014,"eng",3,6,95,6)
+  str(data3_stage2_xlsx_2014_eng)
+  head(data3_stage2_xlsx_2014_eng)
+  tail(data3_stage2_xlsx_2014_eng)
+```
+
+** Medical Health Sciences **
+  
+```{r}
+  data3_stage2_xlsx_2014_med <-load_panel2014("6",file3_stage2_rel_path_2014,"med",4,6,70,6)
+  str(data3_stage2_xlsx_2014_med)
+  head(data3_stage2_xlsx_2014_med)
+  tail(data3_stage2_xlsx_2014_med)
+```
+
+** Environmental Agricultural Sciences **
+  
+```{r}
+  data3_stage2_xlsx_2014_env <-load_panel2014("6",file3_stage2_rel_path_2014,"env",5,6,74,6)
+  str(data3_stage2_xlsx_2014_env)
+  head(data3_stage2_xlsx_2014_env)
+  tail(data3_stage2_xlsx_2014_env)
+```
+
+** Natural Animal Sciences **
+  
+```{r}
+  data3_stage2_xlsx_2014_nat <-load_panel2014("6",file3_stage2_rel_path_2014,"nat",6,6,92,6)
+  str(data3_stage2_xlsx_2014_nat)
+  head(data3_stage2_xlsx_2014_nat)
+  tail(data3_stage2_xlsx_2014_nat)
+```
+
+** Social Sciences **
+NOTE: In this panel I have removed the last candidate that quit the competition.
+```{r}
+  data3_stage2_xlsx_2014_soc <-load_panel2014("6",file3_stage2_rel_path_2014,"soc",7,6,65,6)
+  str(data3_stage2_xlsx_2014_soc)
+  head(data3_stage2_xlsx_2014_soc)
+  tail(data3_stage2_xlsx_2014_soc)
+```
+
+** Humanities **
+NOTE: Some candidate was eliminated after appeal.
+```{r}
+  data3_stage2_xlsx_2014_hum <-load_panel2014("6",file3_stage2_rel_path_2014,"hum",8,6,53,6)
+  str(data3_stage2_xlsx_2014_hum)
+  head(data3_stage2_xlsx_2014_hum)
+  tail(data3_stage2_xlsx_2014_hum)
+```
+
+### FINAL DATA FRAME OUTPUT
+Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:
+* Ref
+* Name
+* Host
+* Panel
+* Grade1
+* Rank1
+* Status1
+* Grade2
+* Rank2
+* Status2
+* Grade3
+* Rank3
+* Status3
+* Grade4
+* WGrade4
+* Rank4
+* PanelRank4
+* Status4
+* Grade5
+* WGrade5
+* Rank5
+* PanelRank5
+* Status5
+* Grade6
+* WGrade6
+* Rank6
+* PanelRank6
+* Status6
+
+Let us first list the global data_frames and their dimensions
+```{r}
+  dim(data1_stage1_xlsx_2014)
+  dim(data2_stage1_xlsx_2014)
+  dim(data3_stage1_xlsx_2014)
+  dim(data1_stage2_xlsx_2014_global)
+  dim(data2_stage2_xlsx_2014_global)
+  dim(data3_stage2_xlsx_2014_global)
+```
+Now it is easier to start by creating a data frame only with the candidate details ordered by IF reference.
+```{r}
+  data_2014 <- data1_stage1_xlsx_2014[order(data1_stage1_xlsx_2014$Ref),1:3]
+  head(data_2014)
+  tail(data_2014)
+```
+Next, we create all all the columns we want to exist.
+```{r}
+  nrecords <- dim(data_2014)[1]
+  data_2014$Panel <- rep("empty",nrecords)
+  
+  data_2014$Grade1 <- rep(NA,nrecords)
+  data_2014$Rank1 <- rep(NA,nrecords)
+  data_2014$Status1 <- rep("empty",nrecords)
+  
+  data_2014$Grade2 <- rep(NA,nrecords)
+  data_2014$Rank2 <- rep(NA,nrecords)
+  data_2014$Status2 <- rep("empty",nrecords)
+  
+  data_2014$Grade3 <- rep(NA,nrecords)
+  data_2014$Rank3 <- rep(NA,nrecords)
+  data_2014$Status3 <- rep("empty",nrecords)
+  
+  data_2014$Grade4 <- rep(NA,nrecords)
+  data_2014$WGrade4 <- rep(NA,nrecords)
+  data_2014$Rank4 <- rep(NA,nrecords)
+  data_2014$PanelRank4 <- rep(NA,nrecords)
+  data_2014$Status4 <- rep("empty",nrecords)
+  
+  data_2014$Grade5 <- rep(NA,nrecords)
+  data_2014$WGrade5 <- rep(NA,nrecords)
+  data_2014$Rank5 <- rep(NA,nrecords)
+  data_2014$PanelRank5 <- rep(NA,nrecords)
+  data_2014$Status5 <- rep("empty",nrecords)  
+  
+  data_2014$Grade6 <- rep(NA,nrecords)
+  data_2014$WGrade6 <- rep(NA,nrecords)
+  data_2014$Rank6 <- rep(NA,nrecords)
+  data_2014$PanelRank6 <- rep(NA,nrecords)
+  data_2014$Status6 <- rep("empty",nrecords)
+  
+  head(data_2014)
+  tail(data_2014)
+```
+
+Next we populate each column by retrieving the information from each data frame. The first data_frame is the easiest
+```{r}
+  data_2014$Grade1 <- data1_stage1_xlsx_2014[order(data1_stage1_xlsx_2014$Ref),"Grade1"]
+  data_2014$Status1 <- data1_stage1_xlsx_2014[order(data1_stage1_xlsx_2014$Ref),"Status1"]
+  data1_stage1_xlsx_2014$Rank1 <- 1:nrecords
+  data_2014$Rank1 <- data1_stage1_xlsx_2014[order(data1_stage1_xlsx_2014$Ref),"Rank1"]
+  head(data_2014)
+  tail(data_2014)
+  rownames(data_2014)<-NULL
+  head(data_2014)
+  tail(data_2014)
+```
+The last step was to remove the original rownames and number them from 1 to nrecords ordered by reference. 
+
+For the information in the second file we first check if we can take advantage of the  fact that they are almost identical. Let us see if the ordering produced from the Ref are the same
+```{r}
+  sum(!(data1_stage1_xlsx_2014$Ref[order(data1_stage1_xlsx_2014$Ref)]==data2_stage1_xlsx_2014$Ref[order(data2_stage1_xlsx_2014$Ref)]))
+```
+So we can just add the file 2 information easily
+```{r}
+  data_2014$Grade2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Grade2"]
+  data_2014$Status2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Status2"]
+  data1_stage1_xlsx_2014$Rank2 <- 1:nrecords
+  data_2014$Rank2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Rank2"]
+  head(data_2014)
+  tail(data_2014)
+```
+Let us just check that there are only small differences.
+```{r}
+  sum(is.na(data_2014$Grade1))
+  sum(is.na(data_2014$Grade2))
+  sum(!(data_2014$Grade2[!is.na(data_2014$Grade2)]==data_2014$Grade1[!is.na(data_2014$Grade1)]))
+  sum(is.na(data_2014$Status1))
+  sum(is.na(data_2014$Status2))
+  sum(!(data_2014$Status2[!is.na(data_2014$Status2)]==data_2014$Status1[!is.na(data_2014$Status1)]))
+```
+
+Now to add the file3 information we need to loop over the entries and place the values in the correct place
+```{r}
+  nrecords3 <- dim(data3_stage1_xlsx_2014)[1]
+  data3_stage1_xlsx_2014$Rank3 <- 1:nrecords3
+  for (i in 1:nrecords3) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data3_stage1_xlsx_2014[i,"Ref"])
+    data_2014$Grade3[rowpos] <- data3_stage1_xlsx_2014[i,"Grade3"]
+    data_2014$Rank3[rowpos] <- data3_stage1_xlsx_2014[i,"Rank3"]
+    data_2014$Status3[rowpos] <- "Yes"
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+For the remaining files we follow a similar strategy.
+**file 4**
+```{r}
+  nrecords4 <- dim(data1_stage2_xlsx_2014_global)[1]
+  data1_stage2_xlsx_2014_global$Rank4 <- 1:nrecords4
+  for (i in 1:nrecords4) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data1_stage2_xlsx_2014_global[i,"Ref"])
+    data_2014$Rank4[rowpos] <- data1_stage2_xlsx_2014_global[i,"Rank4"]
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+Now we retrieve information from each panel but we first concatenate in a big dataframe
+```{r}
+  data1_stage2_xlsx_2014_panels<-rbind(data1_stage2_xlsx_2014_hum,data1_stage2_xlsx_2014_soc,data1_stage2_xlsx_2014_nat,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_med,data1_stage2_xlsx_2014_eng,data1_stage2_xlsx_2014_sci)
+```
+And finally we re-distribute the values
+```{r}
+  nrecords4 <- dim(data1_stage2_xlsx_2014_panels)[1]
+  for (i in 1:nrecords4) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data1_stage2_xlsx_2014_panels[i,"Ref"])
+    data_2014$Grade4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Grade4"]
+    data_2014$WGrade4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"WGrade4"]
+    data_2014$Status4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Status4"]
+    data_2014$PanelRank4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"PanelRank4"]
+    data_2014$Panel[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Panel"]
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+
+Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:
+```{r}
+  sum(data_2014[!is.na(data_2014$Grade4),"Grade4"]-data1_stage2_xlsx_2014_global[order(data1_stage2_xlsx_2014_global$Ref),"Grade4"])
+```
+
+**file 5**
+```{r}
+  nrecords5 <- dim(data2_stage2_xlsx_2014_global)[1]
+  data2_stage2_xlsx_2014_global$Rank5 <- 1:nrecords5
+  for (i in 1:nrecords5) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data2_stage2_xlsx_2014_global[i,"Ref"])
+    data_2014$Rank5[rowpos] <- data2_stage2_xlsx_2014_global[i,"Rank5"]
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+Now we retrieve information from each panel but we first concatenate in a big dataframe
+```{r}
+  data2_stage2_xlsx_2014_panels<-rbind(data2_stage2_xlsx_2014_hum,data2_stage2_xlsx_2014_soc,data2_stage2_xlsx_2014_nat,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_med,data2_stage2_xlsx_2014_eng,data2_stage2_xlsx_2014_sci)
+```
+And finally we re-distribute the values
+```{r}
+  nrecords5 <- dim(data2_stage2_xlsx_2014_panels)[1]
+  for (i in 1:nrecords5) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data2_stage2_xlsx_2014_panels[i,"Ref"])
+    data_2014$Grade5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"Grade5"]
+    data_2014$WGrade5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"WGrade5"]
+    data_2014$Status5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"Status5"]
+    data_2014$PanelRank5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"PanelRank5"]
+    if(data_2014$Panel[rowpos] != data2_stage2_xlsx_2014_panels[i,"Panel"]){
+      warning("Bad panel info!!!!")
+      break
+    }
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+
+Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:
+```{r}
+  sum(data_2014[!is.na(data_2014$Grade5),"Grade5"]-data2_stage2_xlsx_2014_global[order(data2_stage2_xlsx_2014_global$Ref),"Grade5"])
+```
+
+**file 6**
+```{r}
+  nrecords6 <- dim(data3_stage2_xlsx_2014_global)[1]
+  data3_stage2_xlsx_2014_global$Rank6 <- 1:nrecords6
+  for (i in 1:nrecords6) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data3_stage2_xlsx_2014_global[i,"Ref"])
+    data_2014$Rank6[rowpos] <- data3_stage2_xlsx_2014_global[i,"Rank6"]
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+Now we retrieve information from each panel but we first concatenate in a big dataframe
+```{r}
+  data3_stage2_xlsx_2014_panels<-rbind(data3_stage2_xlsx_2014_hum,data3_stage2_xlsx_2014_soc,data3_stage2_xlsx_2014_nat,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_med,data3_stage2_xlsx_2014_eng,data3_stage2_xlsx_2014_sci)
+```
+And finally we re-distribute the values
+```{r}
+  nrecords6 <- dim(data3_stage2_xlsx_2014_panels)[1]
+  for (i in 1:nrecords6) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2014$Ref==as.character(data3_stage2_xlsx_2014_panels[i,"Ref"])
+    data_2014$Grade6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"Grade6"]
+    data_2014$WGrade6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"WGrade6"]
+    data_2014$Status6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"Status6"]
+    data_2014$PanelRank6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"PanelRank6"]
+    if(data_2014$Panel[rowpos] != data3_stage2_xlsx_2014_panels[i,"Panel"]){
+      warning("Bad panel info!!!!")
+      break
+    }
+  }
+  head(data_2014)
+  tail(data_2014)
+```
+
+Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:
+```{r}
+  sum(data_2014[!is.na(data_2014$Grade6),"Grade6"]-data3_stage2_xlsx_2014_global[order(data3_stage2_xlsx_2014_global$Ref),"Grade6"])
+```
+
+**EXPORT**
+I will write all clean data in the directory:
+```{r}
+  clean_data_dir <- "clean_data"
+```
+
+For the 2014 data I will use
+```{r}
+  clean_data_subdir2014 <- "2014"
+```
+Now we create the directory tree:
+```{r}
+  make_data_sub_directory(clean_data_dir,clean_data_subdir2014)
+```
+And export the clean data file
+```{r}
+  write.csv(data_2014,paste(clean_data_dir,"/",clean_data_subdir2014,"/clean_data2014.csv", sep = ""),row.names = FALSE)
+```
 
 ## IF competition 2015
 
@@ -441,6 +1158,9 @@ In this year and following the competition became a two stage process. The sub-d
 
 ### Stage 1
 #### Before appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file1_stage1_url_2015 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2015/docs/IF2015_Fase1_AposAvaliacao-Locked.xlsx"
@@ -451,9 +1171,48 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2015, file1_stage1_url_2015,file1_stage1_name_2015)
+  file1_stage1_rel_path_2015 <- make_data_file_download(raw_dir, sub_dir2015, file1_stage1_url_2015,file1_stage1_name_2015)
 ```
+
+**CLEANUP**
+
+Now we load the file
+```{r}
+  data1_stage1_xlsx_2015 <- read.xlsx(file1_stage1_rel_path_2015,sheetIndex = 1,startRow = 3, endRow = 1370)[,1:5]
+```
+The structure is
+```{r}
+  str(data1_stage1_xlsx_2015)
+  head(data1_stage1_xlsx_2015)
+  tail(data1_stage1_xlsx_2015)
+```
+The levels for the Reference and Name seem OK because they are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data1_stage1_xlsx_2015) <-c("Ref","Name","Host","Grade1","Status1")
+```
+Let us check the levels for Status and Final.Grade:
+```{r}
+  levels(data1_stage1_xlsx_2015$Status1)
+  unique(data1_stage1_xlsx_2015$Grade1)
+```
+For a uniform notation we rename the levels for the status
+```{r}
+  levels(data1_stage1_xlsx_2015$Status1)[1]<- "Yes"
+  levels(data1_stage1_xlsx_2015$Status1)[2]<- "No"
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data1_stage1_xlsx_2015$Grade1,breaks = seq(0.25,9.75,by = 0.5))
+```
+As a consistency check let us see if the the candidates are ordered correctly (removing the NA values)
+```{r}
+  unique(data1_stage1_xlsx_2015$Grade1[!is.na(data1_stage1_xlsx_2015$Grade1)]-sort(data1_stage1_xlsx_2015$Grade1[!is.na(data1_stage1_xlsx_2015$Grade1)],decreasing=TRUE))
+```
+
 #### After appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file2_stage1_url_2015 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2015/docs/IF2015_Fase1_AposAudienciaPrevia_locked.xlsx"
@@ -464,11 +1223,47 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2015, file2_stage1_url_2015,file2_stage1_name_2015)
+  file2_stage1_rel_path_2015 <- make_data_file_download(raw_dir, sub_dir2015, file2_stage1_url_2015,file2_stage1_name_2015)
+```
+
+**CLEANUP**
+
+Now we load the file and organise the global sheet
+```{r}
+  data2_stage1_xlsx_2015 <- read.xlsx(file2_stage1_rel_path_2015,sheetIndex = 1,startRow = 3, endRow = 1370)[,1:5]
+```
+The structure is
+```{r}
+  str(data2_stage1_xlsx_2015)
+```
+The levels for the Reference and Name seem OK because they are all unique as expected. For convenience we now rename the columns:
+```{r}
+  colnames(data2_stage1_xlsx_2015) <-c("Ref","Name","Host","Grade2","Status2")
+```
+Let us check the levels for Status and Final.Grade:
+```{r}
+  levels(data2_stage1_xlsx_2015$Status2)
+  unique(data2_stage1_xlsx_2015$Grade2)
+```
+For a uniform notation we rename the levels for the status
+```{r}
+  levels(data2_stage1_xlsx_2015$Status2)[1]<- "Yes"
+  levels(data2_stage1_xlsx_2015$Status2)[2]<- "No"
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data2_stage1_xlsx_2015$Grade2,breaks = seq(0.25,9.75,by = 0.5))
+```
+As a consistency check let us see if the the candidates are ordered correctly (removing the NA values)
+```{r}
+  unique(data2_stage1_xlsx_2015$Grade2[!is.na(data2_stage1_xlsx_2015$Grade2)]-sort(data2_stage1_xlsx_2015$Grade2[!is.na(data2_stage1_xlsx_2015$Grade2)],decreasing=TRUE))
 ```
 
 ### Stage 2
 #### Before appeal
+
+**DOWNLOAD**
+
 We downloaded the raw data from the direct link  at
 ```{r, warning=FALSE}
   file1_stage2_url_2015 <- "https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/2015/docs/IF2015_Fase2_AposAvaliacao_locked.xlsx"
@@ -479,12 +1274,271 @@ and chose the filename
 ```
 To download  we call:
 ```{r, warning=FALSE}
-  make_data_file_download(raw_dir, sub_dir2015, file1_stage2_url_2015,file1_stage2_name_2015)
+  file1_stage2_rel_path_2015<-make_data_file_download(raw_dir, sub_dir2015, file1_stage2_url_2015,file1_stage2_name_2015)
 ```
 
-## Extra data
- TO DO!!!
+**CLEANUP**
 
+Now we load the file and organise the global sheet
+```{r}
+  data1_stage2_xlsx_2015_global <- read.xlsx(file1_stage2_rel_path_2015,sheetIndex = 1,startRow = 4, endRow = 701)[,1:4]
+```
+The structure is
+```{r}
+  str(data1_stage2_xlsx_2015_global)
+```
+The levels for the Reference and Name seem OK. For convenience we now rename the columns:
+```{r}
+  colnames(data1_stage2_xlsx_2015_global) <-c("Ref","Name","Host","Grade3")
+```
+Let us check the values:
+```{r}
+  unique(data1_stage2_xlsx_2015_global$Grade3)
+```
+Let us histogram to make sure everything is OK
+```{r}
+  hist(data1_stage2_xlsx_2015_global$Grade3,breaks = seq(4.5,9.5,by = 1))
+```
+As a consistency check let us see if the candidates are ordered correctly
+```{r}
+  unique(data1_stage2_xlsx_2015_global$Grade3-sort(data1_stage2_xlsx_2015_global$Grade3,decreasing=TRUE))
+```
+
+But now, in this stage we have information for the various individual panels with detailed scores. 
+
+```{r}
+  load_panel2015<- function(round,input_file,panel_name,sheet_num, start_row, end_row, ncolumns){
+    # read data
+    data <- read.xlsx(input_file,sheetIndex = sheet_num,startRow = start_row, endRow = end_row)[,1:ncolumns]
+    # Rename columns
+    colnames(data)<-c("Ref","Name",paste("Grade",round,sep = ""),paste("WGrade",round,sep = ""),paste("CVGrade",round,sep = ""),paste("ResearchGrade",round,sep = ""),paste("CareerPlanGrade",round,sep = ""),paste("Status",round,sep = ""))
+    # Remove the level "Yes*" to be "Yes" and "*" to "Reserve"
+    levels(data[[paste("Status",round,sep = "")]])<-c("No","Yes","Yes")
+    data$Panel <- rep(panel_name,dim(data)[1])
+    data[[paste("PanelRank",round,sep = "")]]<- 1:(dim(data)[1])
+    # Return data frame after checks
+    data
+  }
+```
+
+Let us load this information.
+
+** Medical Health Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2015_med <-load_panel2015("3",file1_stage2_rel_path_2015,"med",2,4,75,8)
+  str(data1_stage2_xlsx_2015_med)
+  head(data1_stage2_xlsx_2015_med)
+  tail(data1_stage2_xlsx_2015_med)
+```
+
+** Exact Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2015_sci <-load_panel2015("3",file1_stage2_rel_path_2015,"sci",3,4,137,8)
+  str(data1_stage2_xlsx_2015_sci)
+  head(data1_stage2_xlsx_2015_sci)
+  tail(data1_stage2_xlsx_2015_sci)
+```
+
+** Environmental Agricultural Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2015_env <-load_panel2015("3",file1_stage2_rel_path_2015,"env",4,4,105,8)
+  str(data1_stage2_xlsx_2015_env)
+  head(data1_stage2_xlsx_2015_env)
+  tail(data1_stage2_xlsx_2015_env)
+```
+
+** Engineering and Technology **
+NOTE: In this panel I have removed the last 2 candidates that quit the competition.  
+```{r}
+  data1_stage2_xlsx_2015_eng <-load_panel2015("3",file1_stage2_rel_path_2015,"eng",5,4,162,8)
+  str(data1_stage2_xlsx_2015_eng)
+  head(data1_stage2_xlsx_2015_eng)
+  tail(data1_stage2_xlsx_2015_eng)
+```
+
+** Natural Animal Sciences **
+  
+```{r}
+  data1_stage2_xlsx_2015_nat <-load_panel2015("3",file1_stage2_rel_path_2015,"nat",6,4,106,8)
+  str(data1_stage2_xlsx_2015_nat)
+  head(data1_stage2_xlsx_2015_nat)
+  tail(data1_stage2_xlsx_2015_nat)
+```
+
+** Social Sciences **
+
+```{r}
+  data1_stage2_xlsx_2015_soc <-load_panel2015("3",file1_stage2_rel_path_2015,"soc",7,4,56,8)
+  str(data1_stage2_xlsx_2015_soc)
+  head(data1_stage2_xlsx_2015_soc)
+  tail(data1_stage2_xlsx_2015_soc)
+```
+
+** Humanities **
+```{r}
+  data1_stage2_xlsx_2015_hum <-load_panel2015("3",file1_stage2_rel_path_2015,"hum",8,4,84,8)
+  str(data1_stage2_xlsx_2015_hum)
+  head(data1_stage2_xlsx_2015_hum)
+  tail(data1_stage2_xlsx_2015_hum)
+```
+### FINAL DATA FRAME OUTPUT
+Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:
+* Ref
+* Name
+* Host
+* Panel
+* Grade1
+* Rank1
+* Status1
+* Grade2
+* Rank2
+* Status2
+* Grade3
+* WGrade3
+* CVGrade3
+* ResearchGrade3
+* CareerPlanGrade3
+* Rank3
+* PanelRank3
+* Status3
+
+Let us first list the global data_frames and their dimensions
+```{r}
+  dim(data1_stage1_xlsx_2015)
+  dim(data2_stage1_xlsx_2015)
+  dim(data1_stage2_xlsx_2015_global)
+```
+Now it is easier to start by creating a data frame only with the candidate details ordered by IF reference.
+```{r}
+  data_2015 <- data1_stage1_xlsx_2015[order(data1_stage1_xlsx_2015$Ref),1:3]
+  head(data_2015)
+  tail(data_2015)
+```
+Next, we create all all the columns we want to exist.
+```{r}
+  nrecords <- dim(data_2015)[1]
+  data_2015$Panel <- rep("empty",nrecords)
+  
+  data_2015$Grade1 <- rep(NA,nrecords)
+  data_2015$Rank1 <- rep(NA,nrecords)
+  data_2015$Status1 <- rep("empty",nrecords)
+  
+  data_2015$Grade2 <- rep(NA,nrecords)
+  data_2015$Rank2 <- rep(NA,nrecords)
+  data_2015$Status2 <- rep("empty",nrecords)
+  
+  data_2015$Grade3 <- rep(NA,nrecords)
+  data_2015$WGrade3 <- rep(NA,nrecords)
+  data_2015$CVGrade3 <- rep(NA,nrecords)
+  data_2015$ResearchGrade3 <- rep(NA,nrecords)
+  data_2015$CareerPlanGrade3 <- rep(NA,nrecords)
+  data_2015$Rank3 <- rep(NA,nrecords)
+  data_2015$PanelRank3 <- rep(NA,nrecords)
+  data_2015$Status3 <- rep("empty",nrecords)
+  
+  head(data_2015)
+  tail(data_2015)
+```
+
+Next we populate each column by retrieving the information from each data frame. The first data_frame is the easiest
+```{r}
+  data_2015$Grade1 <- data1_stage1_xlsx_2015[order(data1_stage1_xlsx_2015$Ref),"Grade1"]
+  data_2015$Status1 <- data1_stage1_xlsx_2015[order(data1_stage1_xlsx_2015$Ref),"Status1"]
+  data1_stage1_xlsx_2015$Rank1 <- 1:nrecords
+  data_2015$Rank1 <- data1_stage1_xlsx_2015[order(data1_stage1_xlsx_2015$Ref),"Rank1"]
+  head(data_2015)
+  tail(data_2015)
+  rownames(data_2015)<-NULL
+  head(data_2015)
+  tail(data_2015)
+```
+The last step was to remove the original rownames and number them from 1 to nrecords ordered by reference. 
+
+For the information in the second file we first check if we can take advantage of the  fact that they are almost identical. Let us see if the ordering produced from the Ref are the same
+```{r}
+  sum(!(data1_stage1_xlsx_2015$Ref[order(data1_stage1_xlsx_2015$Ref)]==data2_stage1_xlsx_2015$Ref[order(data2_stage1_xlsx_2015$Ref)]))
+```
+So we can just add the file 2 information easily
+```{r}
+  data_2015$Grade2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Grade2"]
+  data_2015$Status2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Status2"]
+  data1_stage1_xlsx_2015$Rank2 <- 1:nrecords
+  data_2015$Rank2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Rank2"]
+  head(data_2015)
+  tail(data_2015)
+```
+Let us just check that there are only small differences.
+```{r}
+  sum(is.na(data_2015$Grade1))
+  sum(is.na(data_2015$Grade2))
+  sum(!(data_2015$Grade2[!is.na(data_2015$Grade2)]==data_2015$Grade1[!is.na(data_2015$Grade1)]))
+  sum(is.na(data_2015$Status1))
+  sum(is.na(data_2015$Status2))
+  sum(!(data_2015$Status2[!is.na(data_2015$Status2)]==data_2015$Status1[!is.na(data_2015$Status1)]))
+```
+
+For the remaining files we follow a similar strategy.
+**file 3**
+```{r}
+  nrecords3 <- dim(data1_stage2_xlsx_2015_global)[1]
+  data1_stage2_xlsx_2015_global$Rank3 <- 1:nrecords3
+  for (i in 1:nrecords3) {
+    # Determine position of record in final data_frame
+    rowpos <- data_2015$Ref==as.character(data1_stage2_xlsx_2015_global[i,"Ref"])
+    data_2015$Rank3[rowpos] <- data1_stage2_xlsx_2015_global[i,"Rank3"]
+  }
+  head(data_2015)
+  tail(data_2015)
+```
+Now we retrieve information from each panel but we first concatenate in a big dataframe
+```{r}
+  data1_stage2_xlsx_2015_panels<-rbind(data1_stage2_xlsx_2015_hum,data1_stage2_xlsx_2015_soc,data1_stage2_xlsx_2015_nat,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_med,data1_stage2_xlsx_2015_eng,data1_stage2_xlsx_2015_sci)
+```
+And finally we re-distribute the values
+```{r}
+  nrecords3 <- dim(data1_stage2_xlsx_2015_panels)[1]
+  for (i in 1:nrecords3) {
+    # Determine position of record in final data_fram
+    rowpos <- data_2015$Ref==as.character(data1_stage2_xlsx_2015_panels[i,"Ref"])
+    data_2015$Grade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"Grade3"]
+    data_2015$WGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"WGrade3"]
+    data_2015$CVGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"CVGrade3"]
+    data_2015$ResearchGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"ResearchGrade3"]
+    data_2015$CareerPlanGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"CareerPlanGrade3"]
+    data_2015$Status3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"Status3"]
+    data_2015$PanelRank3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"PanelRank3"]
+    data_2015$Panel[rowpos] <- data1_stage2_xlsx_2015_panels[i,"Panel"]
+  }
+  head(data_2015)
+  tail(data_2015)
+```
+
+Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:
+```{r}
+  sum(data_2015[!is.na(data_2015$Grade3),"Grade3"]-data1_stage2_xlsx_2015_global[order(data1_stage2_xlsx_2015_global$Ref),"Grade5"])
+```
+
+**EXPORT**
+I will write all clean data in the directory:
+```{r}
+  clean_data_dir <- "clean_data"
+```
+
+For the 2015 data I will use
+```{r}
+  clean_data_subdir2015 <- "2015"
+```
+Now we create the directory tree:
+```{r}
+  make_data_sub_directory(clean_data_dir,clean_data_subdir2015)
+```
+And export the clean data file
+```{r}
+  write.csv(data_2015,paste(clean_data_dir,"/",clean_data_subdir2015,"/clean_data2015.csv", sep = ""),row.names = FALSE)
+```
 
 
 
