@@ -1,0 +1,603 @@
+---
+title: "Analysis"
+output:
+  html_document:
+    code_folding: show
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    toc: yes
+  word_document:
+    toc: yes
+---
+
+Before we start we set up some things
+```{r, message=FALSE, warning=FALSE}
+library(xlsx)
+library(httr)
+library(jsonlite)
+rm(list=ls())# Cleaning up workspace before starting
+setwd("/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/")
+```
+
+This document describes the data analylsis of the FCT investigator calls for the period 2013-2015. For further information see https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/estatisticas.phtml.pt
+
+# Utilities
+Here are some useful functions.
+
+1. A master function that stats and creates a data directory and a log file to keep information on when downloads were made and sub-directories and files were created.
+```{r}
+  # This function uses the working directory as reference
+  make_data_directory <- function(directory_name){
+    if(!file.exists(directory_name) & directory_name != "./" & directory_name != "." & directory_name != ""){
+        dir.create(directory_name)
+      dir_log <- file(paste(directory_name,"/directory.log",sep=""),"a")
+      write(paste("Directory ",as.character(directory_name)," was created at ",system("date -u", intern = TRUE)), file = dir_log, append = TRUE)
+        close(dir_log)
+    }
+    else if(directory_name == "./" | directory_name == "." | directory_name == ""){
+        stop("Please specify a valid directory to hold your data!")
+    }
+    else{
+        warning(paste("The",directory_name,"directory and directory.log already exist."))
+    }
+    directory_name
+  }
+```
+2. A function that stats for a sub-directory and creates it if necessary and writes and entry in the log.
+```{r}
+  make_data_sub_directory <- function(directory_name, sub_directory_name){
+    # make master directory first if necessary
+    make_data_directory(directory_name)
+    # Then move on to make this sub-directory
+    rel_path <-paste(directory_name,"/",sub_directory_name,sep="") 
+    if(!file.exists(rel_path)){
+      dir.create(rel_path)
+      dir_log <- file(paste(directory_name,"/directory.log",sep=""),"a")
+      write(paste("sub-directory",rel_path,"was created at ",system("date -u", intern = TRUE)), dir_log, append = TRUE)
+      close(dir_log)
+    }else{
+      warning(paste("The",rel_path,"directory already exists."))
+    }
+    rel_path
+  }
+```
+3. A function that stats for a downloaded file and downloads it if necessary and writes an entry in the log.
+```{r}
+  make_data_file_download <- function(directory_name, sub_directory_name,url_path,filename){
+    # make master directory first if necessary
+    make_data_directory(directory_name)
+    # make sub directory if necessary
+    make_data_sub_directory(directory_name, sub_directory_name)
+    # Then download file
+    rel_path <-paste(directory_name,"/",sub_directory_name,sep="") 
+    rel_path_file <-paste(directory_name,"/",sub_directory_name,"/",filename,sep="") 
+    if(!file.exists(rel_path_file)){
+      file_log <- file(paste(rel_path_file,".log",sep=""),"w")
+      download.file(url_path, destfile	= rel_path_file)
+      write(paste("File",rel_path_file,"was downloaded at",system("date -u", intern = TRUE),"from the following url: ",url_path), file_log)
+      close(file_log)
+    }else{
+      warning(paste("The",rel_path_file,"file already exists."))
+    }
+    rel_path_file
+  }
+```
+
+# Data loading
+
+## IF2013
+```{r}
+  clean_data_dir <- "clean_data"
+  clean_data_subdir2013 <- "2013"
+  data2013<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2013,"/clean_data2013.csv", sep = ""))
+  head(data2013)
+  tail(data2013)
+```
+
+## IF2014
+```{r}
+  clean_data_dir <- "clean_data"
+  clean_data_subdir2014 <- "2014"
+  data2014<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2014,"/clean_data2014.csv", sep = ""))
+  head(data2014)
+  tail(data2014)
+```
+
+## IF2015
+```{r}
+  clean_data_dir <- "clean_data"
+  clean_data_subdir2015 <- "2015"
+  data2015<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2015,"/clean_data2015.csv", sep = ""))
+  head(data2015)
+  tail(data2015)
+```
+
+# Exploratory analysis
+
+The purpose of this section is to enumerate interesting questions that we may want to address in a detailed analysis and to quickly check if there is any hope to get any useful information on the possible answers to those questions. Let us first make a list:
+
+* Description of populations and the distribution/acceptance rates by area
+    + Distributions of marks and rankings for global population and panels
+    + Acceptance rates by panel vs global acceptance rates, maybe also by institution. 
+    + Year by year variability
+    + Plot correlations
+* Quality of the evaluation process:
+    + What is the error of the Grades and the rankings? 
+    + How much can a candidate fluctuate up/down wards?
+    + What is the expectation value for the number of candidates unfairly exlcuded at an early stage of the evaluation?
+    + What is the error associated with the final ranking? (I am not even sure that there is a way to estimate this!) What is the expectation value of the number of candidates unfairly exluded in the final ranking?
+* Bias:
+    + Compare cases of candidates that in one year tried one institute and another year another institute. To do this correctly I would probably need pairs of institutes with candidates moving both ways, otherwise it is note clear if this is just due to CV improvement. 
+    + Gender bias? Is there an easy way to determine the gender?
+
+## Description of the populations
+
+### Gender information 
+
+There is a piece of information that is contained in the Name field that we can first try to retrieve. That is the gender. I found online APIs that I can use directly. My approach will be to use: 1) more than one API to cross-check, 2) Only accept the gender decision if the probability that the API is correct is larger by some threshold(say 95%), 3) will visually check through the table to see if there are obvious problems, 4) unresolved cases will be checked individually by looking and online information for the candidates and social media (such as facebook, twitter, G+ etc...)
+
+Let us start by collecting all distinct first names in all calls. 
+```{r}
+  all_names<-c(as.character(data2013$Name),as.character(data2014$Name),as.character(data2015$Name))
+  head(all_names)
+  length(all_names)
+  get_first_name <- function(full_name){
+    as.character(strsplit(full_name,split = " ")[[1]][1])
+  }
+  all_first_names <- unique(lapply(all_names,get_first_name))
+  length(unique(all_first_names))
+  all_first_names[[1]]
+```
+
+Next we write a function that gets the gender information from the API for one name.
+
+```{r}
+  # Function to determine gender
+  genderAPI1 <- function(name,gender_in){
+    if(gender_in == "X"){
+      # get gender first from the https://genderize.io/ API
+      API1 <- fromJSON(paste("https://api.genderize.io/?name=",name,sep = ""))
+      if(!is.null(API1$gender)){
+        if(as.numeric(API1$probability)>0.9){
+          gender <- API1$gender
+        }
+        else{
+          gender <- "indeterminate"
+        }
+      }
+      else{
+        gender <- "indeterminate"
+      }
+    }
+    else{
+      gender <- gender_in
+    }
+    gender
+  }
+```
+
+Now we want to keep a file with information on the names that have already been resolved to avoid accessing the API for names that have already been checked. The possible levels I will use are male, female, indeterminate and "X". The last white space means that there was no attempt to resolve the gender yet.
+```{r}
+  aux_dir = "auxiliary"
+  make_data_directory("auxiliary")
+  aux_gender_file_all_namesAPI1 = "aux_gender_file_namesAPI1.txt"
+  path_aux_gender_file_all_namesAPI1 = paste(aux_dir,"/",aux_gender_file_all_namesAPI1,sep = "")
+  # this creates the auxiliary file to hold the information 
+  if(!file.exists(path_aux_gender_file_all_namesAPI1)){
+    write(rep("X",length(all_first_names)),file = path_aux_gender_file_all_namesAPI1) 
+  }
+  API1_gender_results <-
+    (read.table(path_aux_gender_file_all_namesAPI1,header = FALSE, stringsAsFactors = FALSE))$V1
+  for(i in 1:length(all_first_names)){
+    API1_gender_results[i] <- genderAPI1(all_first_names[[i]],API1_gender_results[i])
+  # This re-writes the file with the new results each time a successful API request happens
+    write(API1_gender_results,file = path_aux_gender_file_all_namesAPI1,append = FALSE) 
+  }
+  head(API1_gender_results)
+```
+Now we reload from the file to look at the results
+```{r}
+  API1_gender_results <-
+    (read.table(path_aux_gender_file_all_namesAPI1,header = FALSE, stringsAsFactors = FALSE))$V1
+```
+Let's make a dataframe to hold the results
+```{r}
+  API1_gender_results_data <- data.frame(unlist(all_first_names))
+  #colnames(API1_gender_results)<- c("gender")
+  colnames(API1_gender_results_data)<- c("Name")
+  API1_gender_results_data$gender <- API1_gender_results 
+  head(API1_gender_results_data)
+  API1_gender_results_data_indeterminate<-API1_gender_results_data[API1_gender_results_data$gender=="indeterminate",]
+  API1_gender_results_data_others<-API1_gender_results_data[!(API1_gender_results_data$gender=="indeterminate"),]
+  head(API1_gender_results_data_indeterminate)
+  head(API1_gender_results_data_others)
+```
+
+Now we want to run the second API through it. 
+
+```{r}
+  # Function to determine gender
+  genderAPI2 <- function(name,gender_in){
+    if(gender_in == "X"){
+      # get gender first from the https://gender-api.com API
+      #API2 <- fromJSON(paste("https://gender-api.com/get?name=",name,"&key=CVpuQkaJyWLwrXENxA",sep = ""))
+      API2 <- fromJSON(paste("https://gender-api.com/get?name=",name,"&key=paZgRkxMDVYuwZKkyg",sep = ""))
+      if(!(API2$gender=="unknown")){
+        if(as.numeric(API2$accuracy)>90){
+          gender <- API2$gender
+        }
+        else{
+          gender <- "indeterminate"
+        }
+      }
+      else{
+        if("errmsg" %in% names(API2)){
+          gender <- gender_in
+        }
+        else{
+          gender <- "indeterminate"
+        }
+      }
+    }
+    else{
+      gender <- gender_in
+    }
+    gender
+  }
+```
+
+```{r}
+  aux_gender_file_all_namesAPI2 = "aux_gender_file_namesAPI2.txt"
+  path_aux_gender_file_all_namesAPI2 = paste(aux_dir,"/",aux_gender_file_all_namesAPI2,sep = "")
+  # this creates the auxiliary file to hold the information 
+  if(!file.exists(path_aux_gender_file_all_namesAPI2)){
+    write(rep("X",length(all_first_names)),file = path_aux_gender_file_all_namesAPI2) 
+  }
+  API2_gender_results <-
+    (read.table(path_aux_gender_file_all_namesAPI2,header = FALSE, stringsAsFactors = FALSE))$V1
+  
+  # First do the indeterminates
+  for(i in 1:dim(API1_gender_results_data_indeterminate)[1]){
+    API2_gender_results[as.numeric(rownames(API1_gender_results_data_indeterminate[i,]))] <- genderAPI2(as.character(API1_gender_results_data_indeterminate[i,1]),API2_gender_results[as.numeric(rownames(API1_gender_results_data_indeterminate[i,]))])
+  # This re-writes the file with the new results each time a successful API request happens
+    write(API2_gender_results,file = path_aux_gender_file_all_namesAPI2,append = FALSE) 
+  }
+  head(API2_gender_results)
+  
+  #Now we do the remaining names
+    for(i in 1:dim(API1_gender_results_data_others)[1]){
+    API2_gender_results[as.numeric(rownames(API1_gender_results_data_others[i,]))] <- genderAPI2(as.character(API1_gender_results_data_others[i,1]),API2_gender_results[as.numeric(rownames(API1_gender_results_data_others[i,]))])
+  # This re-writes the file with the new results each time a successful API request happens
+    write(API2_gender_results,file = path_aux_gender_file_all_namesAPI2,append = FALSE) 
+  }
+  
+```
+
+Now we reload from the file to look at the results
+```{r}
+  API2_gender_results <-
+    (read.table(path_aux_gender_file_all_namesAPI2,header = FALSE, stringsAsFactors = FALSE))$V1
+```
+Let's make a dataframe to hold the results
+```{r}
+  API2_gender_results_data <- data.frame(unlist(all_first_names))
+  #colnames(API2_gender_results)<- c("gender")
+  colnames(API2_gender_results_data)<- c("Name")
+  API2_gender_results_data$gender <- API2_gender_results 
+  head(API2_gender_results_data)
+```
+Now we will compare the two APIs for the cases where we already have results.
+```{r}
+  API1_test <- API2_gender_results_data[API2_gender_results_data$gender!="X" & API1_gender_results_data$gender!="indeterminate",]
+  API2_test <- API1_gender_results_data[API2_gender_results_data$gender!="X" & API1_gender_results_data$gender!="indeterminate",]
+  head(API1_test==API2_test)
+  dim(API1_test)
+  sum(API1_test$gender==API2_test$gender)
+  diff_cases1 <- dim(API1_test)[1]-sum(API1_test$gender==API2_test$gender)
+  API1_gender_results_data[as.numeric(rownames(API1_test[API1_test[,2]!=API2_test[,2],])),]
+  API2_gender_results_data[as.numeric(rownames(API1_test[API1_test[,2]!=API2_test[,2],])),]
+  
+  # Look at cases untied by second API
+  API2_test2 <- API2_gender_results_data[API2_gender_results_data$gender!="X" & API1_gender_results_data$gender=="indeterminate" & API2_gender_results_data$gender!="indeterminate",]
+  dim(API2_test2)
+  API2_test2
+  
+  diff_cases2 <- dim(API1_gender_results_data_indeterminate)[1]
+```
+So the total number of cases to check carefully by hand are:
+```{r}
+  diff_cases2+diff_cases1
+```
+Now let us save only the list of agreements between the two APIs so that it is easier to perform a human check of every name and so that we only have to enter values one by one for a fraction of the cases (roughly 10%). 
+```{r}
+  gender_results_data <- data.frame(unlist(all_first_names))
+  colnames(gender_results_data)<- c("Name")
+  gender_results_data$gender <- rep("X",length(gender_results_data$Name))
+  for(i in 1:length(gender_results_data$Name)){
+    if(API1_gender_results_data$gender[i]==API2_gender_results_data$gender[i] & API1_gender_results_data$gender[i]!="indeterminate"){
+    gender_results_data$gender[i] <- API1_gender_results_data$gender[i]
+    }
+  }
+```
+Now let us resolve some cases visually.
+```{r}
+  cbind(gender_results_data[gender_results_data$gender=="X",],API2_gender_results_data[gender_results_data$gender=="X",])
+  dim(gender_results_data)
+```
+I will now manually accept the results of API2 that resolve these cases only when I also agree with the gender (mostly portuguese and some latin names).
+```{r}
+  gender_results_data[5,"gender"]<-"male"
+  gender_results_data[69,"gender"]<-"female"
+  gender_results_data[120,"gender"]<-"male"
+  gender_results_data[152,"gender"]<-"female"
+  gender_results_data[165,"gender"]<-"female"
+  gender_results_data[215,"gender"]<-"male"
+  gender_results_data[381,"gender"]<-"male"
+  gender_results_data[425,"gender"]<-"male"
+  gender_results_data[438,"gender"]<-"male"
+  gender_results_data[457,"gender"]<-"male"
+  gender_results_data[459,"gender"]<-"female"
+  gender_results_data[593,"gender"]<-"male"
+  gender_results_data[656,"gender"]<-"male"
+  gender_results_data[673,"gender"]<-"male"
+  gender_results_data[701,"gender"]<-"female"
+  gender_results_data[760,"gender"]<-"male"
+  gender_results_data[779,"gender"]<-"male"
+  gender_results_data[806,"gender"]<-"female"
+  gender_results_data[831,"gender"]<-"male"
+  gender_results_data[860,"gender"]<-"male"
+  gender_results_data[861,"gender"]<-"male"
+  gender_results_data[869,"gender"]<-"male"
+```
+Finally the list I will use to preliminarily complete the genders in each call (later checked visually) is 
+```{r}
+  gender_results_final <- gender_results_data[gender_results_data$gender!="X",]
+  head(gender_results_final,50)
+  dim(gender_results_final)
+```
+
+### IF2013
+In this call we have a limited amount of data. We can only look at simple things like acceptance rates and distributions of grades.
+
+```{r}
+  head(data2013)
+```
+The other thing we can look at is gender information. Let us create a column for this field and let us provisionally fill it using the gender resolution list that we already produced
+```{r}
+  data2013$gender <- rep("X",dim(data2013)[1])
+  data2013<-data2013[,c("Ref", "Name", "gender", "Grade1", "Grade3","Status1", "Status3", "Rank1","Rank3")]
+  head(data2013)
+```
+Now let us apply the gender list that we have
+```{r}
+  for (i in 1:dim(data2013)[1]) {
+    full_name <- as.character(data2013$Name[i])
+    first_name <- as.character(strsplit(full_name,split = " ")[[1]][1])
+    list_pos <- first_name==gender_results_final$Name
+    if(sum(list_pos)==1)
+      data2013[i,"gender"]<-gender_results_final[list_pos,"gender"]
+  }
+  head(data2013[,c("Name","gender")])
+  head(data2013[data2013$gender=="X",c("Name","gender")])
+```
+Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is in a national institute I assume I am getting the right person:
+```{r}
+  data2013[data2013$gender=="X",c("Name","gender")]
+```
+
+```{r}
+  data2013[61,"gender"]<-"male"
+  data2013[155,"gender"]<-"female"
+  data2013[238,"gender"]<-"female"
+  data2013[242,"gender"]<-"male"
+  data2013[246,"gender"]<-"female"
+  data2013[253,"gender"]<-"female"
+  data2013[292,"gender"]<-"male"
+  data2013[313,"gender"]<-"female"
+  data2013[317,"gender"]<-"female"
+  data2013[375,"gender"]<-"male"
+  data2013[389,"gender"]<-"male"
+  data2013[403,"gender"]<-"male"
+  data2013[423,"gender"]<-"male"
+  data2013[473,"gender"]<-"female"
+  data2013[480,"gender"]<-"male"
+  data2013[493,"gender"]<-"male"
+  data2013[515,"gender"]<-"female"
+  data2013[543,"gender"]<-"male"
+  data2013[550,"gender"]<-"male"
+  data2013[553,"gender"]<-"male"
+  data2013[562,"gender"]<-"male"
+  data2013[612,"gender"]<-"female"
+  data2013[634,"gender"]<-"male"
+  data2013[675,"gender"]<-"male"
+  data2013[682,"gender"]<-"female"
+  data2013[770,"gender"]<-"male"
+  data2013[803,"gender"]<-"male"
+  data2013[809,"gender"]<-"male"
+  data2013[876,"gender"]<-"female"
+  data2013[922,"gender"]<-"male"
+  data2013[978,"gender"]<-"male"
+  data2013[995,"gender"]<-"male"
+  data2013[1041,"gender"]<-"male"
+  data2013[1056,"gender"]<-"male"
+  data2013[1107,"gender"]<-"male"
+  data2013[1185,"gender"]<-"male"
+  data2013[1233,"gender"]<-"male"
+  data2013[1243,"gender"]<-"male"
+  data2013[1277,"gender"]<-"female"
+  data2013[1322,"gender"]<-"male"
+  data2013[1335,"gender"]<-"male"
+  data2013[1336,"gender"]<-"male"
+  data2013[1346,"gender"]<-"female"
+  data2013[1336,"gender"]<-"male"
+  data2013[1375,"gender"]<-"male"
+  data2013[1409,"gender"]<-"female"
+  data2013[1420,"gender"]<-"female"
+  data2013[1425,"gender"]<-"female"
+  data2013[1458,"gender"]<-"male"
+  data2013[1474,"gender"]<-"male"
+  data2013[1477,"gender"]<-"male"
+```
+The percentage of candidates with undetermined gender is small:
+```{r}
+  sum(data2013$gender=="X")*100./dim(data2013)[1]
+```
+So we remove these candidates from any gender analysis. Note also that if there are missidentified genders either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction and also it should be a small number of cases. 
+
+**Gender distribution**
+```{r}
+  # Proportion of male vs female candidates
+  data.frame(c(sum(data2013$gender=="male"),sum(data2013$gender=="female"),sum(data2013$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Absolute acceptance by gender
+   data.frame(c(sum(data2013$gender=="male" & data2013$Status3=="Yes"),sum(data2013$gender=="female" & data2013$Status3=="Yes"),sum(data2013$gender=="X" & data2013$Status3=="Yes")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Acceptance rate by gender
+   data.frame(c(sum(data2013$gender=="male" & data2013$Status3=="Yes")/sum(data2013$gender=="male"),sum(data2013$gender=="female" & data2013$Status3=="Yes")/sum(data2013$gender=="female"),sum(data2013$gender=="X" & data2013$Status3=="Yes")/sum(data2013$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+  
+  # distribution of marks per gender
+  hist(data2013[data2013$gender=="female","Grade3"])
+  hist(data2013[data2013$gender=="male","Grade3"])
+  hist(data2013[data2013$gender=="X","Grade3"])
+
+  # distribution of rankings per gender
+  hist(data2013[data2013$gender=="female","Rank3"],seq(0,1500,by = 250))
+  hist(data2013[data2013$gender=="male","Rank3"], seq(0,1500,by = 250))
+  hist(data2013[data2013$gender=="X","Rank3"], seq(0,1500,by = 250))
+```
+
+Facts:
+
+  * The acceptance rate is larger for male
+  * The distribution of marks is such that male has higher marks
+  * Following these, there is a slight excess of higher rankings for men compared to women
+
+Q? Is there gender discrimination? This call is not conclusive because I cannot split by areas. For example it may be the case that Men apply to areas where the acceptance rate is higher but equal for women. We need to look into the following years where this information is available.
+
+### IF2014
+In this call we have much more data. 
+
+```{r}
+  head(data2014)
+```
+The other thing we can look at is gender information. Let us create a column for this field and let us provisionally fill it using the gender resolution list that we already produced
+```{r}
+  data2014$gender <- rep("X",dim(data2014)[1])
+  head(data2014)
+```
+Now let us apply the gender list that we have
+```{r}
+  for (i in 1:dim(data2014)[1]) {
+    full_name <- as.character(data2014$Name[i])
+    first_name <- as.character(strsplit(full_name,split = " ")[[1]][1])
+    list_pos <- first_name==gender_results_final$Name
+    if(sum(list_pos)==1)
+      data2014[i,"gender"]<-gender_results_final[list_pos,"gender"]
+  }
+  head(data2014[,c("Name","gender")])
+  head(data2014[data2014$gender=="X",c("Name","gender")])
+  dim(data2014[data2014$gender=="X",c("Name","gender")])
+```
+Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is in a national institute I assume I am getting the right person:
+```{r}
+  data2014[data2014$gender=="X",c("Name","gender")]
+```
+
+```{r}
+  data2014[4,"gender"]<-"male"
+  data2014[8,"gender"]<-"female"
+  data2014[21,"gender"]<-"male"
+  data2014[35,"gender"]<-"male"
+  data2014[72,"gender"]<-"female"
+  data2014[110,"gender"]<-"male"
+  data2014[111,"gender"]<-"female"
+  data2014[213,"gender"]<-"female"
+  data2014[222,"gender"]<-"female"
+  data2014[234,"gender"]<-"male"
+  data2014[272,"gender"]<-"female"
+  data2014[332,"gender"]<-"male"
+  data2014[354,"gender"]<-"female"
+  data2014[401,"gender"]<-"male"
+  data2014[408,"gender"]<-"male"
+  data2014[433,"gender"]<-"female"
+  data2014[483,"gender"]<-"female"
+  data2014[550,"gender"]<-"female"
+  data2014[589,"gender"]<-"male"
+  data2014[597,"gender"]<-"male"
+  data2014[643,"gender"]<-"male"
+  data2014[721,"gender"]<-"female"
+  data2014[833,"gender"]<-"female"
+  data2014[865,"gender"]<-"female"
+  data2014[882,"gender"]<-"female"
+  data2014[912,"gender"]<-"male"
+  data2014[921,"gender"]<-"male"
+  data2014[982,"gender"]<-"male"
+  data2014[995,"gender"]<-"female"
+  data2014[1008,"gender"]<-"male"
+  data2014[1028,"gender"]<-"female"
+  data2014[1040,"gender"]<-"male"
+  data2014[1085,"gender"]<-"female"
+  data2014[1132,"gender"]<-"male"
+  data2014[1136,"gender"]<-"male"
+  data2014[1153,"gender"]<-"female"
+  data2014[1184,"gender"]<-"male"
+  data2014[1187,"gender"]<-"female"
+  data2014[1209,"gender"]<-"male"
+  data2014[1231,"gender"]<-"male"
+  data2014[1246,"gender"]<-"male"
+  data2014[1265,"gender"]<-"male"
+  data2014[1279,"gender"]<-"male"
+  data2014[1306,"gender"]<-"female"
+  data2014[1314,"gender"]<-"male"
+  data2014[1363,"gender"]<-"male"
+  data2014[1377,"gender"]<-"male"
+  data2014[1382,"gender"]<-"female"
+```
+The percentage of candidates with undetermined gender is small:
+```{r}
+  sum(data2014$gender=="X")*100./dim(data2014)[1]
+```
+So we remove these candidates from any gender analysis. Note also that if there are missidentified genders either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction and also it should be a small number of cases. 
+
+**Gender distribution**
+```{r}
+  # Proportion of male vs female candidates
+  data.frame(c(sum(data2014$gender=="male"),sum(data2014$gender=="female"),sum(data2014$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Absolute acceptance by gender
+   data.frame(c(sum(data2014$gender=="male" & data2014$Status6=="Yes"),sum(data2014$gender=="female" & data2014$Status6=="Yes"),sum(data2014$gender=="X" & data2014$Status6=="Yes")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Acceptance rate by gender
+   data.frame(c(sum(data2014$gender=="male" & data2014$Status6=="Yes")/sum(data2014$gender=="male"),sum(data2014$gender=="female" & data2014$Status6=="Yes")/sum(data2014$gender=="female"),sum(data2014$gender=="X" & data2014$Status6=="Yes")/sum(data2014$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+  
+  # distribution of marks per gender
+  hist(data2014[data2014$gender=="female","WGrade6"])
+  hist(data2014[data2014$gender=="male","WGrade6"])
+  hist(data2014[data2014$gender=="X","WGrade6"])
+
+  # distribution of rankings per gender
+  hist(data2014[data2014$gender=="female","Rank6"],seq(0,1500,by = 250))
+  hist(data2014[data2014$gender=="male","Rank6"], seq(0,1500,by = 250))
+  hist(data2014[data2014$gender=="X","Rank6"], seq(0,1500,by = 250))
+```
+
+Facts:
+
+  * The acceptance rate is larger for male
+  * The distribution of marks is such that male has higher marks
+  * Following these, there is a slight excess of higher rankings for men compared to women
+
+Q? Is there gender discrimination? Need to looll at particular panels
+
+# Statistical analysis
+
+# Summary of results
+
+# References
+
+Directly relevant to the FCT investigator program, there is an online file summarising some very basic stats in this webpage https://www.fct.pt/estatisticas/emprego-cientifico/index.phtml.pt. This may be useful to cross-check my analysis. Let us download it
+```{r}
+  make_data_file_download("references",".","https://www.fct.pt/estatisticas/emprego-cientifico/docs/Doc_Emprego_Cientifico_PT.pdf","Doc_Emprego_Cientifico_PT.pdf")
+```
+
