@@ -2,7 +2,7 @@
 title: "Analysis"
 output:
   html_document:
-    code_folding: show
+    code_folding: hide
     number_sections: yes
     toc: yes
   pdf_document:
@@ -10,23 +10,20 @@ output:
   word_document:
     toc: yes
 ---
-
-Before we start we set up some things
+This document describes the data analylsis of the FCT investigator calls for the period 2013-2015. For further information see https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/estatisticas.phtml.pt
 ```{r, message=FALSE, warning=FALSE}
+#Before we start we set up some things
 library(xlsx)
 library(httr)
 library(jsonlite)
+library(ggplot2)
 rm(list=ls())# Cleaning up workspace before starting
 setwd("/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/")
 ```
 
-This document describes the data analylsis of the FCT investigator calls for the period 2013-2015. For further information see https://www.fct.pt/apoios/contratacaodoutorados/investigador-fct/estatisticas.phtml.pt
-
-# Utilities
-Here are some useful functions.
-
-1. A master function that stats and creates a data directory and a log file to keep information on when downloads were made and sub-directories and files were created.
 ```{r}
+  # Utilities: Here are some useful functions.
+  ##1. A master function that stats and creates a data directory and a log file to keep information on when downloads were made and sub-directories and files were created.
   # This function uses the working directory as reference
   make_data_directory <- function(directory_name){
     if(!file.exists(directory_name) & directory_name != "./" & directory_name != "." & directory_name != ""){
@@ -44,8 +41,8 @@ Here are some useful functions.
     directory_name
   }
 ```
-2. A function that stats for a sub-directory and creates it if necessary and writes and entry in the log.
 ```{r}
+  #2. A function that stats for a sub-directory and creates it if necessary and writes and entry in the log.
   make_data_sub_directory <- function(directory_name, sub_directory_name){
     # make master directory first if necessary
     make_data_directory(directory_name)
@@ -62,8 +59,9 @@ Here are some useful functions.
     rel_path
   }
 ```
-3. A function that stats for a downloaded file and downloads it if necessary and writes an entry in the log.
+
 ```{r}
+#3. A function that stats for a downloaded file and downloads it if necessary and writes an entry in the log.
   make_data_file_download <- function(directory_name, sub_directory_name,url_path,filename){
     # make master directory first if necessary
     make_data_directory(directory_name)
@@ -83,41 +81,91 @@ Here are some useful functions.
     rel_path_file
   }
 ```
+```{r}
+# Multiple plot function
+#
+# ggplot objects can be passed in ..., or to plotlist (as a list of ggplot objects)
+# - cols:   Number of columns in layout
+# - layout: A matrix specifying the layout. If present, 'cols' is ignored.
+#
+# If the layout is something like matrix(c(1,2,3,3), nrow=2, byrow=TRUE),
+# then plot 1 will go in the upper left, 2 will go in the upper right, and
+# 3 will go all the way across the bottom.
+#
+multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
+  library(grid)
+
+  # Make a list from the ... arguments and plotlist
+  plots <- c(list(...), plotlist)
+
+  numPlots = length(plots)
+
+  # If layout is NULL, then use 'cols' to determine layout
+  if (is.null(layout)) {
+    # Make the panel
+    # ncol: Number of columns of plots
+    # nrow: Number of rows needed, calculated from # of cols
+    layout <- matrix(seq(1, cols * ceiling(numPlots/cols)),
+                    ncol = cols, nrow = ceiling(numPlots/cols))
+  }
+
+ if (numPlots==1) {
+    print(plots[[1]])
+
+  } else {
+    # Set up the page
+    grid.newpage()
+    pushViewport(viewport(layout = grid.layout(nrow(layout), ncol(layout))))
+
+    # Make each plot, in the correct location
+    for (i in 1:numPlots) {
+      # Get the i,j matrix positions of the regions that contain this subplot
+      matchidx <- as.data.frame(which(layout == i, arr.ind = TRUE))
+
+      print(plots[[i]], vp = viewport(layout.pos.row = matchidx$row,
+                                      layout.pos.col = matchidx$col))
+    }
+  }
+}
+```
 
 # Data loading
 
 ## IF2013
+Loading data and sample of first few lines
 ```{r}
   clean_data_dir <- "clean_data"
   clean_data_subdir2013 <- "2013"
   data2013<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2013,"/clean_data2013.csv", sep = ""))
-  head(data2013)
-  tail(data2013)
+  head(data2013,3)
+  tail(data2013,3)
 ```
 
 ## IF2014
+Loading data and sample of first few lines
 ```{r}
   clean_data_dir <- "clean_data"
   clean_data_subdir2014 <- "2014"
   data2014<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2014,"/clean_data2014.csv", sep = ""))
-  head(data2014)
-  tail(data2014)
+  head(data2014,3)
+  tail(data2014,3)
 ```
 
 ## IF2015
+Loading data and sample of first few lines
 ```{r}
   clean_data_dir <- "clean_data"
   clean_data_subdir2015 <- "2015"
   data2015<- read.csv(paste(clean_data_dir,"/",clean_data_subdir2015,"/clean_data2015.csv", sep = ""))
-  head(data2015)
-  tail(data2015)
+  head(data2015,3)
+  tail(data2015,3)
 ```
 
 # Exploratory analysis
 
 The purpose of this section is to enumerate interesting questions that we may want to address in a detailed analysis and to quickly check if there is any hope to get any useful information on the possible answers to those questions. Let us first make a list:
 
-* Description of populations and the distribution/acceptance rates by area
+* Description of populations and the distribution/acceptance rates by scientific area
     + Distributions of marks and rankings for global population and panels
     + Acceptance rates by panel vs global acceptance rates, maybe also by institution. 
     + Year by year variability
@@ -127,18 +175,16 @@ The purpose of this section is to enumerate interesting questions that we may wa
     + How much can a candidate fluctuate up/down wards?
     + What is the expectation value for the number of candidates unfairly exlcuded at an early stage of the evaluation?
     + What is the error associated with the final ranking? (I am not even sure that there is a way to estimate this!) What is the expectation value of the number of candidates unfairly exluded in the final ranking?
-* Bias:
+* Bias (here it sounds like a good idea to apply a permutation test either to ranks or grade distributions for the label of interest -- gender or host... maybe bootstrapping can also be a way to get confidence intervals?):
     + Compare cases of candidates that in one year tried one institute and another year another institute. To do this correctly I would probably need pairs of institutes with candidates moving both ways, otherwise it is note clear if this is just due to CV improvement. 
     + Gender bias? Is there an easy way to determine the gender?
 
-## Description of the populations
+## Gender information 
 
-### Gender information 
+There is a piece of information that is contained in the Name field that we can first try to retrieve. That is the gender. I found online APIs that I can use directly. My approach will be to use: 1) more than one API to cross-check, 2) Only accept the gender decision if the probability that the API is correct is larger by some threshold(say 90%), 3) unresolved cases will be checked individually by looking at online information for the candidates (such as their personal webpages) and social media (such as facebook, twitter, G+ etc...), 4) A final statistical test on a sample of names will be performed to quantify an upper bound on the probability of mistakes.
 
-There is a piece of information that is contained in the Name field that we can first try to retrieve. That is the gender. I found online APIs that I can use directly. My approach will be to use: 1) more than one API to cross-check, 2) Only accept the gender decision if the probability that the API is correct is larger by some threshold(say 95%), 3) will visually check through the table to see if there are obvious problems, 4) unresolved cases will be checked individually by looking and online information for the candidates and social media (such as facebook, twitter, G+ etc...)
-
-Let us start by collecting all distinct first names in all calls. 
-```{r}
+We start by collecting all distinct first names in all calls. 
+```{r, results = "hide"}
   all_names<-c(as.character(data2013$Name),as.character(data2014$Name),as.character(data2015$Name))
   head(all_names)
   length(all_names)
@@ -177,8 +223,8 @@ Next we write a function that gets the gender information from the API for one n
   }
 ```
 
-Now we want to keep a file with information on the names that have already been resolved to avoid accessing the API for names that have already been checked. The possible levels I will use are male, female, indeterminate and "X". The last white space means that there was no attempt to resolve the gender yet.
-```{r}
+Now we want to keep a file with information on the names that have already been resolved to avoid accessing the API for names that have already been checked. The possible levels I will use are male, female, indeterminate and "X". The latter is a symbol that means that there was no attempt to resolve the gender yet.
+```{r, results = "hide", warning=FALSE}
   aux_dir = "auxiliary"
   make_data_directory("auxiliary")
   aux_gender_file_all_namesAPI1 = "aux_gender_file_namesAPI1.txt"
@@ -196,7 +242,7 @@ Now we want to keep a file with information on the names that have already been 
   }
   head(API1_gender_results)
 ```
-Now we reload from the file to look at the results
+Now we reload from the file saved in the process above to look at the results
 ```{r}
   API1_gender_results <-
     (read.table(path_aux_gender_file_all_namesAPI1,header = FALSE, stringsAsFactors = FALSE))$V1
@@ -214,7 +260,7 @@ Let's make a dataframe to hold the results
   head(API1_gender_results_data_others)
 ```
 
-Now we want to run the second API through it. 
+Now we want to run the second API through the results. 
 
 ```{r}
   # Function to determine gender
@@ -247,7 +293,7 @@ Now we want to run the second API through it.
   }
 ```
 
-```{r}
+```{r, results="hide"}
   aux_gender_file_all_namesAPI2 = "aux_gender_file_namesAPI2.txt"
   path_aux_gender_file_all_namesAPI2 = paste(aux_dir,"/",aux_gender_file_all_namesAPI2,sep = "")
   # this creates the auxiliary file to hold the information 
@@ -287,8 +333,8 @@ Let's make a dataframe to hold the results
   API2_gender_results_data$gender <- API2_gender_results 
   head(API2_gender_results_data)
 ```
-Now we will compare the two APIs for the cases where we already have results.
-```{r}
+Now we  compare the two APIs for the cases where we already have results.
+```{r, results="hide"}
   API1_test <- API2_gender_results_data[API2_gender_results_data$gender!="X" & API1_gender_results_data$gender!="indeterminate",]
   API2_test <- API1_gender_results_data[API2_gender_results_data$gender!="X" & API1_gender_results_data$gender!="indeterminate",]
   head(API1_test==API2_test)
@@ -305,7 +351,7 @@ Now we will compare the two APIs for the cases where we already have results.
   
   diff_cases2 <- dim(API1_gender_results_data_indeterminate)[1]
 ```
-So the total number of cases to check carefully by hand are:
+In the previous code chunks we have identified several un-resolved cases. The total number of cases to check carefully by hand are:
 ```{r}
   diff_cases2+diff_cases1
 ```
@@ -323,7 +369,7 @@ Now let us save only the list of agreements between the two APIs so that it is e
 Now let us resolve some cases visually.
 ```{r}
   cbind(gender_results_data[gender_results_data$gender=="X",],API2_gender_results_data[gender_results_data$gender=="X",])
-  dim(gender_results_data)
+  #dim(gender_results_data)
 ```
 I will now manually accept the results of API2 that resolve these cases only when I also agree with the gender (mostly portuguese and some latin names).
 ```{r}
@@ -350,12 +396,49 @@ I will now manually accept the results of API2 that resolve these cases only whe
   gender_results_data[861,"gender"]<-"male"
   gender_results_data[869,"gender"]<-"male"
 ```
-Finally the list I will use to preliminarily complete the genders in each call (later checked visually) is 
+Finally the head cases of the list I will use to preliminarily complete the genders in each call (later checked visually) is 
 ```{r}
   gender_results_final <- gender_results_data[gender_results_data$gender!="X",]
-  head(gender_results_final,50)
+  head(gender_results_final,10)
   dim(gender_results_final)
 ```
+where the last number is the number of first names on this list.
+
+### Accuracy test design
+
+In the next subsection I will accept the gender resolution information that was produced in this section directly. In addition, I will resolve the few undetermined cases for which: i) I find information online (personal webpages for example),  ii) a second name helps me resolve the gender, or iii) because the name is obviously of a certain gender to me. The result will be a list with very few undetermined cases. 
+
+An important question is how reliable this procedure is, or how error prone it is. The only way to settle this completely would be to run through the full list one by one and to search hard for several online sources of information to be sure about the gender of the candidate (or even contact the candidate). Since the populations under consideration typically have 1400 candidates this is not feasible. 
+
+In this section we design a simple test that uses a sample drawn from the population to meausure the error level of this procedure. Using the Universe of candidates for which the gender has been resolved, we do the following: 
+
+  1. We randomly draw $n$ distinct candidates from the population.
+  2. For each candidate, I decide if the gender is obvious (for example combination of Portuguese first names is obviously of a certain gender)and/or by searching online for a personal webpage that checks the gender.
+  3. Now we assume that the procedure we have followed for gender identification can be modelled by a binomial distribution, where we assign a constant probability $p$ to incorrectly identifying the gender for a given name. The probability distribution  of $k$ wrong identifications for a trial with size $n$ will then be  
+  $$ binom(k;n,p) = \binom{n}{k}p^k(1-p)^{n-k} $$
+  If we can estimate the parameters of this distribution, then we will be able to estimate the expectation value, $K$, of errors and its standard deviation, which for a population of size $N$ is just
+  $$ K \simeq E[k] \pm \sqrt{Var[k]} = N p \pm \sqrt{N p(1-p)} $$
+  
+  4. Now the question is how to estimate an interval for $p$ given some observation $(k,n)$ for a sample. We know that the distribution of $k$ is binomial
+  $$k \sim binom(k;n,p)$$
+  For simplicity we compute a Bayesian error by building the likelihood:  
+  $$L(p;k,n)= (n+1)binom(k;n,p)= \dfrac{1}{n+1}\binom{n}{k}p^k(1-p)^{n-k}$$
+  The maximum likelihood for the binomial estimator (for $k>0$) is precisely 
+  $$p_{ML}=k/n$$
+  and the standard error estimate
+  $$\sigma_{ML}=\sqrt{\frac{p_{ML}(1-p_{ML})}{n}}.$$
+  For the special case where the observed $k=0$, which will be a possible outcome if our gender identification procedure has a very small error, the likelihood function does not have a stationary point at the origin. In that particular case the Likelihood function is 
+  $$L(p;k,n)= (n+1)(1-p)^{n}.$$
+  We can now find a bayesian confidence interval. If we define a critical p-value
+  $$\int_{p_c}^1 L(p;0,n) dp = (1-p_c)^{n+1}<\alpha $$ 
+  where $p_c$ is the associated critical value for the population $p$, and $\alpha$ $ is the critical value, we get the estimate $p_c < 1-\alpha^{1/(n+1)}$
+  In fact, because we do expect a small number of mistakes we can use this as a guide for the value of $n$ to choose in our test. If our target is to be able to probe $p_c$ less than  $1\%$, i.e., $p_c=0.01$ at a confidence level of $1-\alpha = 95\%$ then 
+  $$n\sim \dfrac{\log \alpha}{\log(1-pc)}-1\sim  300 $$
+  So we will choose $n=300$ for our test. We can use any of the larger populations for the test. We will use the 2015 data sample.
+  
+  In a classical frequentist approach the confidence intervals would have to be estimated more rigorously using a binomial test. However, since we used two different APIs and a human verification combined with a google search for the difficult cases, we expect the number of mistakes to be very small. So the bayesian estimate should be a good approximation in practice.
+  
+## Description of the populations
 
 ### IF2013
 In this call we have a limited amount of data. We can only look at simple things like acceptance rates and distributions of grades.
@@ -381,11 +464,11 @@ Now let us apply the gender list that we have
   head(data2013[,c("Name","gender")])
   head(data2013[data2013$gender=="X",c("Name","gender")])
 ```
-Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is in a national institute I assume I am getting the right person:
+Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is a researcher with the same name I assume I am getting the right person. The list to check is
 ```{r}
   data2013[data2013$gender=="X",c("Name","gender")]
 ```
-
+and I resolve most of the cases in the next code chunk
 ```{r}
   data2013[61,"gender"]<-"male"
   data2013[155,"gender"]<-"female"
@@ -439,54 +522,55 @@ Now I check the names that are undetermined by looking online for personal webpa
   data2013[1474,"gender"]<-"male"
   data2013[1477,"gender"]<-"male"
 ```
-The percentage of candidates with undetermined gender is small:
+The percentage of candidates that remain with undetermined gender is small:
 ```{r}
   sum(data2013$gender=="X")*100./dim(data2013)[1]
 ```
-So we remove these candidates from any gender analysis. Note also that if there are missidentified genders either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction and also it should be a small number of cases. 
+So we remove these candidates from any gender analysis. Note also that if there are missidentified gender fields either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction. Finally we will nevertheless check that we expect those cases to be in a very small number. 
 
-**Gender distribution**
+**Gender distributions**
 ```{r}
   # Proportion of male vs female candidates
-  data.frame(c(sum(data2013$gender=="male"),sum(data2013$gender=="female"),sum(data2013$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+  barplot(c(sum(data2013$gender=="male"),sum(data2013$gender=="female"),sum(data2013$gender=="X")),names.arg  = c("male","female","X"),main = "Total applicants", ylab = "freq")
 
   # Absolute acceptance by gender
-   data.frame(c(sum(data2013$gender=="male" & data2013$Status3=="Yes"),sum(data2013$gender=="female" & data2013$Status3=="Yes"),sum(data2013$gender=="X" & data2013$Status3=="Yes")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+   barplot(c(sum(data2013$gender=="male" & data2013$Status3=="Yes"),sum(data2013$gender=="female" & data2013$Status3=="Yes"),sum(data2013$gender=="X" & data2013$Status3=="Yes")),names.arg = c("male","female","X"),main = "Total accepted", ylab = "freq")
 
   # Acceptance rate by gender
-   data.frame(c(sum(data2013$gender=="male" & data2013$Status3=="Yes")/sum(data2013$gender=="male"),sum(data2013$gender=="female" & data2013$Status3=="Yes")/sum(data2013$gender=="female"),sum(data2013$gender=="X" & data2013$Status3=="Yes")/sum(data2013$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
-  
+   barplot(c(sum(data2013$gender=="male" & data2013$Status3=="Yes")/sum(data2013$gender=="male"),sum(data2013$gender=="female" & data2013$Status3=="Yes")/sum(data2013$gender=="female"),sum(data2013$gender=="X" & data2013$Status3=="Yes")/sum(data2013$gender=="X")), names.arg  = c("male","female","X"),main = "Acceptance rate by gender", ylab = "n_accepted/Total_gender(%)")
+   
   # distribution of marks per gender
-  hist(data2013[data2013$gender=="female","Grade3"])
-  hist(data2013[data2013$gender=="male","Grade3"])
-  hist(data2013[data2013$gender=="X","Grade3"])
-
+  ggplot(data2013[data2013$gender!="X",c("Grade3","gender")], aes(Grade3, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = 1)+ ggtitle("Male vs Female distribution of marks") +scale_fill_manual(values=c("#999999", "#E69F00"))
+  hist(data2013[data2013$gender=="X","Grade3"],seq(2.5,9.5,by = 1))
   # distribution of rankings per gender
-  hist(data2013[data2013$gender=="female","Rank3"],seq(0,1500,by = 250))
-  hist(data2013[data2013$gender=="male","Rank3"], seq(0,1500,by = 250))
+  
+  ggplot(data2013[data2013$gender!="X",c("Rank3","gender")], aes(Rank3, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = dim(data2013)[1]/6, boundary = 0.5)+ ggtitle("Male vs Female distribution of Rank3") +scale_fill_manual(values=c("#999999", "#E69F00"))+ geom_vline(xintercept = 209)
+  
+    ggplot(data2013[data2013$gender!="X" & data2013$Status3=="Yes",c("Rank3","gender")], aes(Rank3, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = dim(data2013[data2013$gender!="X" & data2013$Status3=="Yes",c("Rank3","gender")])[1]/3, boundary = 0.5)+ ggtitle("Male vs Female distribution of Rank3(Status = Yes)") +scale_fill_manual(values=c("#999999", "#E69F00"))
+
   hist(data2013[data2013$gender=="X","Rank3"], seq(0,1500,by = 250))
 ```
 
 Facts:
 
-  * The acceptance rate is larger for male
-  * The distribution of marks is such that male has higher marks
-  * Following these, there is a slight excess of higher rankings for men compared to women
+  * The acceptance rate is larger for the male geender
+  * The distribution of marks is such that the male gender has higher marks
+  * Following these, there is an excess of higher rankings for men compared to women
 
-Q? Is there gender discrimination? This call is not conclusive because I cannot split by areas. For example it may be the case that Men apply to areas where the acceptance rate is higher but equal for women. We need to look into the following years where this information is available.
+Q? Is there gender discrimination? This call is not conclusive because I cannot split by areas. For example it may be the case that "male" apply to areas where the acceptance rate is higher but equal for "female". We need to look into the following years where this information is available.
 
 ### IF2014
-In this call we have much more data. 
+In this call we have more details in the data. 
 
 ```{r}
   head(data2014)
 ```
-The other thing we can look at is gender information. Let us create a column for this field and let us provisionally fill it using the gender resolution list that we already produced
-```{r}
+Let us first add the gender information. We create a column for this field 
+```{r, results="hide"}
   data2014$gender <- rep("X",dim(data2014)[1])
   head(data2014)
 ```
-Now let us apply the gender list that we have
+and  provisionally fill it using the gender resolution list that we already produced:
 ```{r}
   for (i in 1:dim(data2014)[1]) {
     full_name <- as.character(data2014$Name[i])
@@ -499,11 +583,11 @@ Now let us apply the gender list that we have
   head(data2014[data2014$gender=="X",c("Name","gender")])
   dim(data2014[data2014$gender=="X",c("Name","gender")])
 ```
-Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is in a national institute I assume I am getting the right person:
+where the last number is the number of un-resolved names. Now I check these by looking online for personal webpages:
 ```{r}
   data2014[data2014$gender=="X",c("Name","gender")]
 ```
-
+and resolve most of the cases in the next code chunk
 ```{r}
   data2014[4,"gender"]<-"male"
   data2014[8,"gender"]<-"female"
@@ -554,43 +638,343 @@ Now I check the names that are undetermined by looking online for personal webpa
   data2014[1377,"gender"]<-"male"
   data2014[1382,"gender"]<-"female"
 ```
-The percentage of candidates with undetermined gender is small:
+The percentage of candidates with undetermined gender is again small:
 ```{r}
   sum(data2014$gender=="X")*100./dim(data2014)[1]
 ```
-So we remove these candidates from any gender analysis. Note also that if there are missidentified genders either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction and also it should be a small number of cases. 
 
-**Gender distribution**
+**Global distributions**
+```{r}
+  # Distribution of final marks
+  ggplot(data2014[!is.na(data2014$WGrade6),c("WGrade6","gender")], aes(WGrade6)) + geom_histogram(binwidth = 0.5)+ ggtitle("Distribution of WGrade6")
+  # Distribution of intermediate marks
+  ggplot(data2014[!is.na(data2014$Grade2),c("Grade2","gender")], aes(Grade2)) + geom_histogram(binwidth = 0.5)+ ggtitle("Distribution of Grade2")
+  # Variations in ranking between stage 1 and 2
+  rankdiff2014 <- data2014[!is.na(data2014$Rank6),c("Rank3","Rank6")]
+  rankdiff2014$RankDiff <-rankdiff2014$Rank6-rankdiff2014$Rank3
+  
+  mean_rankdiff2014 <- mean(rankdiff2014$RankDiff)
+  sd_rankdiff2014 <-sd(rankdiff2014$RankDiff)
+  bin_rankdiff2014 <-2*460/7
+    #2*dim(rankdiff2014)[1]/6
+  factor_rankdiff2014 <- dim(rankdiff2014)[1]*bin_rankdiff2014
+  gaussrankdiff2014 <- function(x){
+    factor_rankdiff2014*dnorm(x,mean_rankdiff2014,sd_rankdiff2014)
+  }
+  gaussrank2diff2014 <- function(x){
+    factor_rankdiff2014*dnorm(x,mean_rankdiff2014,0.8*sd_rankdiff2014)
+  }
+  ggplot(rankdiff2014, aes(RankDiff)) + geom_histogram(binwidth = bin_rankdiff2014,boundary =-460 )+geom_rug()+stat_function(fun = gaussrankdiff2014, aes(colour = 'Normal'))+stat_function(fun = gaussrank2diff2014, aes(colour = 'sd*0.8'))+ ggtitle("Distribution of RankDiff")+annotate("text", x = 300, y = 225, label = paste("mean = ",as.character(round(mean_rankdiff2014,3))))+annotate("text", x = 300, y = 200, label = paste("sd = ",as.character(round(sd_rankdiff2014,3))))
+```
+This distribution does not seem to follow a gaussian. It seems to be more peaky around the center, meaning a higher frequency for the rank to remain the same rather than varying a lot. Nevertheless the distribution has quite "fat" tails. Maybe see https://en.wikipedia.org/wiki/Rank_correlation ???
+
+**Gender distributions**
+
+1. Acceptance rates
 ```{r}
   # Proportion of male vs female candidates
-  data.frame(c(sum(data2014$gender=="male"),sum(data2014$gender=="female"),sum(data2014$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+  barplot(c(sum(data2014$gender=="male"),sum(data2014$gender=="female"),sum(data2014$gender=="X")),names.arg= c("male","female","X"),main = "Total applicants",ylab = "freq")
 
   # Absolute acceptance by gender
-   data.frame(c(sum(data2014$gender=="male" & data2014$Status6=="Yes"),sum(data2014$gender=="female" & data2014$Status6=="Yes"),sum(data2014$gender=="X" & data2014$Status6=="Yes")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+   barplot(c(sum(data2014$gender=="male" & data2014$Status6=="Yes"),sum(data2014$gender=="female" & data2014$Status6=="Yes"),sum(data2014$gender=="X" & data2014$Status6=="Yes")),names.arg = c("male","female","X"),main = "Total accepted",ylab = "freq")
 
   # Acceptance rate by gender
-   data.frame(c(sum(data2014$gender=="male" & data2014$Status6=="Yes")/sum(data2014$gender=="male"),sum(data2014$gender=="female" & data2014$Status6=="Yes")/sum(data2014$gender=="female"),sum(data2014$gender=="X" & data2014$Status6=="Yes")/sum(data2014$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
-  
+   barplot(c(sum(data2014$gender=="male" & data2014$Status6=="Yes")/sum(data2014$gender=="male"),sum(data2014$gender=="female" & data2014$Status6=="Yes")/sum(data2014$gender=="female"),sum(data2014$gender=="X" & data2014$Status6=="Yes")/sum(data2014$gender=="X")),names.arg  = c("male","female","X"),main = "Acceptance rate by gender", ylab = "n_accepted/Total_gender(%)")
+```
+2. Distribution of Grades
+```{r}
   # distribution of marks per gender
-  hist(data2014[data2014$gender=="female","WGrade6"])
-  hist(data2014[data2014$gender=="male","WGrade6"])
-  hist(data2014[data2014$gender=="X","WGrade6"])
+  ggplot(data2014[data2014$gender!="X" & !is.na(data2014$Grade2),c("Grade2","gender")], aes(Grade2, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = 0.5)+ ggtitle("Male vs Female distribution of Grade2") +scale_fill_manual(values=c("#999999", "#E69F00"))
+
+  ggplot(data2014[data2014$gender!="X" & !is.na(data2014$WGrade6),c("WGrade6","gender")], aes(WGrade6, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = 0.5)+ ggtitle("Male vs Female distribution of WGrade6") +scale_fill_manual(values=c("#999999", "#E69F00"))
+
+# distribution of Rank2 per gender
+  ggplot(data2014[data2014$gender!="X",c("Rank2","gender")], aes(Rank2, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = dim(data2014)[1]/6, boundary = 0.5)+ ggtitle("Male vs Female distribution of Rank2") +scale_fill_manual(values=c("#999999", "#E69F00"))
+  
+# distribution of Rank6 per gender
+  ggplot(data2014[data2014$gender!="X" & !is.na(data2014$Rank6),c("Rank6","gender")], aes(Rank6, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = dim(data2014[data2014$gender!="X" & !is.na(data2014$Rank6),c("Rank6","gender")])[1]/6, boundary = 0.5)+ ggtitle("Male vs Female distribution of Rank6")+geom_vline(xintercept = 229) +scale_fill_manual(values=c("#999999", "#E69F00"))
+  
+  #hist(data2014[data2014$gender=="X","WGrade6"])
 
   # distribution of rankings per gender
-  hist(data2014[data2014$gender=="female","Rank6"],seq(0,1500,by = 250))
-  hist(data2014[data2014$gender=="male","Rank6"], seq(0,1500,by = 250))
-  hist(data2014[data2014$gender=="X","Rank6"], seq(0,1500,by = 250))
+  #hist(data2014[data2014$gender=="female","Rank6"],seq(0,1500,by = 250))
+  #hist(data2014[data2014$gender=="male","Rank6"], seq(0,1500,by = 250))
+  #hist(data2014[data2014$gender=="X","Rank6"], seq(0,1500,by = 250))
+```
+I think that in the last plot there is an effect from candidates in special conditions in the last bin. CHECK THIS AND THINK IF I SHOULD REMOVE FROM ANALYSIS.
+
+3. Plots by panel
+
+Now we are going to investigate if there is gender discrimination in each panel. There is a problem however! We do not have panel information for candiates rejected in the first stage. This is relevant because if there is gender descrimination at the first stage then we cannot compute the relative frequency (because we need to divide by the population size for the given gender). Furthermore, even if we focus on gender discrimination at stage2, the effect will a priori be smaller because if the discrimination criteria follows the same procedure, then the candidates in the discriminated gender are already, on average, of a higher quality by precisely the factor that makes them equal, on average, to the candidates of the other gender in the eyes of the evaluators.  
+
+Let us make some plots to see what happens if we focus on the sub-population of candidates for whom we have panel information (i.e. stage2 candidates).
+
+We look at the density plots (density means divided by the number of candidates in these plots for the given gender) versus the absolute frequency plots
+
+```{r}
+  # Distributions of grades by gender at the end of stage 1 for each panel
+  panel_names <- levels(data2014$Panel)[levels(data2014$Panel)!="empty"]
+  i<-0
+  for (panel_name in panel_names) {
+    i<-i+1
+    #plots_list[[i]]<-
+    data_temp<-data2014[data2014$gender!="X" & !is.na(data2014$Grade2) & data2014$Panel==panel_name,c("Grade2","gender")]
+    p1<-ggplot(data_temp, aes(Grade2, fill = gender)) + geom_histogram(alpha = 0.5, position = 'identity',binwidth = 0.5)+ ggtitle(paste(panel_name, "Nm =",as.character(sum(data_temp$gender=="male")),"Nf=",as.character(sum(data_temp$gender=="female")))) + scale_fill_manual(values=c("#999999", "#E69F00"))
+    p2<-ggplot(data2014[data2014$gender!="X" & !is.na(data2014$Grade2) & data2014$Panel==panel_name,c("Grade2","gender")], aes(Grade2, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = 0.5)+ ggtitle(panel_name) + scale_fill_manual(values=c("#999999", "#E69F00"))
+    multiplot(p1, p2, cols = 2)
+  }
 ```
 
-Facts:
+We see that it is hard to draw a conclusion because to interpret the fluctuations in Grade2 we also need the rest of the population to compute a meaningful density.
 
-  * The acceptance rate is larger for male
-  * The distribution of marks is such that male has higher marks
-  * Following these, there is a slight excess of higher rankings for men compared to women
+If we focus on stage 2 now. We can at the same plots for WGrade6:
 
-Q? Is there gender discrimination? Need to looll at particular panels
+```{r}
+  # Distributions of grades by gender at the end of stage 2 for each panel
+  panel_names <- levels(data2014$Panel)[levels(data2014$Panel)!="empty"]
+  i<-0
+  for (panel_name in panel_names) {
+    i<-i+1
+    #plots_list[[i]]<-
+    data_temp<-data2014[data2014$gender!="X" & !is.na(data2014$WGrade6) & data2014$Panel==panel_name,c("WGrade6","gender")]
+    p1<-ggplot(data_temp, aes(WGrade6, fill = gender)) + geom_histogram(alpha = 0.5, position = 'identity',binwidth = 1)+ ggtitle(paste(panel_name, "Nm =",as.character(sum(data_temp$gender=="male")),"Nf=",as.character(sum(data_temp$gender=="female")))) + scale_fill_manual(values=c("#999999", "#E69F00"))
+    p2<-ggplot(data2014[data2014$gender!="X" & !is.na(data2014$WGrade6) & data2014$Panel==panel_name,c("WGrade6","gender")], aes(WGrade6, fill = gender)) + geom_histogram(alpha = 0.5, aes(y = ..density..), position = 'identity',binwidth = 1)+ ggtitle(panel_name) + scale_fill_manual(values=c("#999999", "#E69F00"))
+    multiplot(p1, p2, cols = 2)
+  }
+```
+We see that these sample per panel are all relatively small. In most panels there is no clear trend. Focusing on the panels with largest samples:
+
+  * For "eng", the density distributions do not differ significantly. In particular it seems like for the grades above the threshold for funding (8 plus 9) the summed density is the same for both genders. 
+  * For "env", the situation is similar but with some excess for "male" for larger marks
+  * For the other panels the situation seems again even among genders, with the exception of the "med" panel for which there is a very large shift of the "male" density function for larger marks. 
+
+Next, let us look at the acceptance rate by gender on stage2
+
+```{r}
+  # Acceptance rates by gender for stage 2 for each panel
+  panel_names <- levels(data2014$Panel)[levels(data2014$Panel)!="empty"]
+  i<-0
+  for (panel_name in panel_names) {
+    i<-i+1
+    #plots_list[[i]]<-
+    data_temp<-data2014[data2014$gender!="X" & !is.na(data2014$WGrade6)  & data2014$Panel==panel_name,c("WGrade6","gender","Status6")]
+    barplot(c(sum(data_temp$gender=="male"),sum(data_temp$gender=="female"),sum(data_temp$gender=="X")),names.arg= c("male","female","X"),main = paste("Total, ",panel_name),ylab = "freq")
+    barplot(c(sum(data_temp$gender=="male" & data_temp$Status6=="Yes"),sum(data_temp$gender=="female" & data_temp$Status6=="Yes"),sum(data_temp$gender=="X" & data_temp$Status6=="Yes")),names.arg = c("male","female","X"),main = "Accepted",ylab = "freq")
+     barplot(c(sum(data_temp$gender=="male" & data_temp$Status6=="Yes")/sum(data_temp$gender=="male"),sum(data_temp$gender=="female" & data_temp$Status6=="Yes")/sum(data_temp$gender=="female"),sum(data_temp$gender=="X" & data_temp$Status6=="Yes")/sum(data_temp$gender=="X")),names.arg  = c("male","female","X"),main = "Acceptance rate by gender", ylab = "n_accepted/Total_gender(%)")
+     # Also provide the numbers
+     df_temp <-data.frame(c(sum(data_temp$gender=="male"),sum(data_temp$gender=="male" & data_temp$Status6=="Yes"),sum(data_temp$gender=="male" & data_temp$Status6=="Yes")/sum(data_temp$gender=="male")),c(sum(data_temp$gender=="female"),sum(data_temp$gender=="female" & data_temp$Status6=="Yes"),sum(data_temp$gender=="female" & data_temp$Status6=="Yes")/sum(data_temp$gender=="female")),c(sum(data_temp$gender!="X"),sum(data_temp$gender!="X" & data_temp$Status6=="Yes"),sum(data_temp$gender!="X" & data_temp$Status6=="Yes")/sum(data_temp$gender!="X")))
+     colnames(df_temp)<-c("male","female","both")
+     show(paste(panel_name," panel"))
+     show(df_temp)
+  }
+```
+
+We note that in some panels the differences are small. To quantify if there is indeed gender discrimination in each panel we should design a test that takes into account the expected spread around teh average acceptance rate assuming "male" and "female" are sampled from the same distribution.
+
+
+Going back to the overall distribution of Grade2 summed over all panels, we can try to estimate whether a simpson type paradox is expected based on the "male/female" ratios for each panel that we have for stage2. Furthermore we have some more pieces of data in the FCT Stats report that I have in the references. We know the number of evaluated applications for the following panel aggregations (note that I have cross checked the correctness of these identifications with the total number of accepted candidates):
+  * "med"
+```{r}
+  ncandidates2014med <- 173
+```
+  * "sci" + "eng"
+```{r}
+  ncandidates2014scieng<- 472
+```
+  * "nat" + "env"
+```{r}
+  ncandidates2014natenv<- 439
+```
+  * "soc" + "hum"
+```{r}
+  ncandidates2014sochum<- 307
+```
+
+Focusing first on the "med" panel, we know that in stage2 the number of remaining female candidates is 39 and of male candidates is 25. The information that we have and that is missing is:
+
+  * Total "female-med" stage1: $173x$ ???
+  * Total "male-med" stage1: $173(1-x)$???
+  * Total "female-med" stage2: 39
+  * Total "male-med" stage2: 25
+  * Distribution of Grade2 for this panel: No ???
+
+**Host acceptance rates**
+
+To analyse this we should also split by panel. Furthermore, it will be convenient to define an ID for each host. I will ID in ascending order of number of applications (or alphabetical for ties).
+FIX CODE NEXT!!!!!!!!!!!!!!!!!
+```{r}
+  hostID2014<-sort(table(data2014$Host))
+  hostID2014names <- row.names(hostID2014)
+  data2014$HostID <- rep(NA,dim(data2014)[1])
+  for (i in 1:length(hostID2014names)) {
+    subframe <- data2014[data2014$Host == hostID2014names[i],]$Ref
+    for(candidate in subframe){
+      data2014[data2014$Ref == candidate,"HostID"]<-hostID2014[i][[1]]
+    }
+  }
+```
+
+  
+
+### IF2015
+In this call we have much more data. 
+
+```{r}
+  head(data2015)
+```
+The other thing we can look at is gender information. Let us create a column for this field and let us provisionally fill it using the gender resolution list that we already produced
+```{r}
+  data2015$gender <- rep("X",dim(data2015)[1])
+  head(data2015)
+```
+Now let us apply the gender list that we have
+```{r}
+  for (i in 1:dim(data2015)[1]) {
+    full_name <- as.character(data2015$Name[i])
+    first_name <- as.character(strsplit(full_name,split = " ")[[1]][1])
+    list_pos <- first_name==gender_results_final$Name
+    if(sum(list_pos)==1)
+      data2015[i,"gender"]<-gender_results_final[list_pos,"gender"]
+  }
+  head(data2015[,c("Name","gender")])
+  head(data2015[data2015$gender=="X",c("Name","gender")])
+  dim(data2015[data2015$gender=="X",c("Name","gender")])
+```
+Now I check the names that are undetermined by looking online for personal webpages. In particular, if I find a photo and it is in a national institute I assume I am getting the right person:
+```{r}
+  data2015[data2015$gender=="X",c("Name","gender")]
+```
+
+```{r}
+  data2015[31,"gender"]<-"female"
+  data2015[56,"gender"]<-"male"
+  data2015[101,"gender"]<-"male"
+  data2015[104,"gender"]<-"male"
+  data2015[117,"gender"]<-"female"
+  data2015[148,"gender"]<-"female"
+  data2015[184,"gender"]<-"female"
+  data2015[207,"gender"]<-"male"
+  data2015[232,"gender"]<-"male"
+  data2015[235,"gender"]<-"male"
+  data2015[266,"gender"]<-"female"
+  data2015[318,"gender"]<-"male"
+  data2015[330,"gender"]<-"female"
+  data2015[331,"gender"]<-"male"
+  data2015[341,"gender"]<-"male"
+  data2015[361,"gender"]<-"female"
+  data2015[362,"gender"]<-"male"
+  data2015[363,"gender"]<-"male"
+  data2015[399,"gender"]<-"male"
+  data2015[418,"gender"]<-"male"
+  data2015[451,"gender"]<-"male"
+  data2015[452,"gender"]<-"female"
+  data2015[480,"gender"]<-"male"
+  data2015[491,"gender"]<-"male"
+  data2015[493,"gender"]<-"male"
+  data2015[510,"gender"]<-"male"
+  data2015[520,"gender"]<-"female"
+  data2015[545,"gender"]<-"male"
+  data2015[552,"gender"]<-"male"
+  data2015[602,"gender"]<-"female"
+  data2015[686,"gender"]<-"female"
+  data2015[737,"gender"]<-"male"
+  data2015[743,"gender"]<-"male"
+  data2015[817,"gender"]<-"male"
+  data2015[868,"gender"]<-"female"
+  data2015[892,"gender"]<-"male"
+  data2015[902,"gender"]<-"female"
+  data2015[931,"gender"]<-"male"
+  data2015[935,"gender"]<-"male"
+  data2015[943,"gender"]<-"male"
+  data2015[1024,"gender"]<-"male"
+  data2015[1044,"gender"]<-"male"
+  data2015[1048,"gender"]<-"male"
+  data2015[1063,"gender"]<-"male"
+  data2015[1085,"gender"]<-"male"
+  data2015[1112,"gender"]<-"male"
+  data2015[1132,"gender"]<-"female"
+  data2015[1142,"gender"]<-"female"
+  data2015[1159,"gender"]<-"male"
+  data2015[1174,"gender"]<-"female"
+  data2015[1176,"gender"]<-"male"
+  data2015[1242,"gender"]<-"male"
+  data2015[1265,"gender"]<-"male"
+  data2015[1276,"gender"]<-"male"
+  data2015[1282,"gender"]<-"female"
+  data2015[1293,"gender"]<-"male"
+  data2015[1330,"gender"]<-"male"
+  data2015[1338,"gender"]<-"female"
+  data2015[1340,"gender"]<-"male"
+  data2015[1365,"gender"]<-"female"
+```
+The percentage of candidates with undetermined gender is small:
+```{r}
+  sum(data2015$gender=="X")*100./dim(data2015)[1]
+```
+So we remove these candidates from any gender analysis. Note also that if there are missidentified genders either due to mistakes or ambiguities, we do not expect it to bias the analysis since it should be roughly equally likely that a mistake is done in either direction and also it should be a small number of cases. 
+
+**Gender distributions**
+
+1. Acceptance rates
+```{r}
+  # Proportion of male vs female candidates
+  data.frame(c(sum(data2015$gender=="male"),sum(data2015$gender=="female"),sum(data2015$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Absolute acceptance by gender
+   data.frame(c(sum(data2015$gender=="male" & data2015$Status3=="Yes"),sum(data2015$gender=="female" & data2015$Status3=="Yes"),sum(data2015$gender=="X" & data2015$Status3=="Yes")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+
+  # Acceptance rate by gender
+   data.frame(c(sum(data2015$gender=="male" & data2015$Status3=="Yes")/sum(data2015$gender=="male"),sum(data2015$gender=="female" & data2015$Status3=="Yes")/sum(data2015$gender=="female"),sum(data2015$gender=="X" & data2015$Status3=="Yes")/sum(data2015$gender=="X")),row.names = c("male","female","X"),fix.empty.names  = FALSE)
+```
+2. Distribution of Grades
+```{r}
+  # distribution of marks per gender
+  hist(data2015[data2015$gender=="female","WGrade3"],seq(4,9.5,by = 0.5))
+  hist(data2015[data2015$gender=="male","WGrade3"],seq(4,9.5,by = 0.5))
+  hist(data2015[data2015$gender=="X","WGrade3"],seq(4,9.5,by = 0.5))
+
+  # distribution of rankings per gender
+  hist(data2015[data2015$gender=="female","Rank3"],seq(0,1500,by = 250))
+  hist(data2015[data2015$gender=="male","Rank3"], seq(0,1500,by = 250))
+  hist(data2015[data2015$gender=="X","Rank3"], seq(0,1500,by = 250))
+```
+
+```{r}
+  # Disttributions of grades by gender at the end of stage 1
+    # distribution of marks per gender
+  hist(data2014[data2014$gender=="female","Grade2"],breaks = seq(0.25,9.75,by = 0.5), freq = FALSE)
+  hist(data2014[data2014$gender=="male","Grade2"],breaks = seq(0.25,9.75,by = 0.5), freq = FALSE)
+  hist(data2014[data2014$gender=="X","Grade2"],breaks = seq(0.25,9.75,by = 0.5), freq = FALSE)
+```
+```{r}
+  # Distributions of grades by gender at the end of stage 1 for sciences
+    # distribution of marks per gender
+  hist(data2014[data2014$gender=="female" & data2014$Panel=="soc","WGrade6"],breaks = seq(0.25,9.75,by = 0.5), freq = TRUE)
+  hist(data2014[data2014$gender=="male" & data2014$Panel=="soc","WGrade6"],breaks = seq(0.25,9.75,by = 0.5), freq = TRUE)
+```
+
+### Accuracy test applied
+
+Now using this sample we will process by hand 300 randomly selected names. We set the seed here to make sure that we always get the same sample when running this notebook again.
+```{r}
+  set.seed(1)
+  (data2015[data2015$gender !="X",])[sample(as.numeric(dim(data2015)[1]),300),c("Name","gender")]
+```
+For the portuguese names that are 100% obviously gender specific I will not look up for webpages. Also my R command above selected a names in a position that did not exist in the dataframe without X values so the total number of checked cases was actually 299. After looking up one by one I found zero mistakes. So we expect less than 1% mistakes at an estimated 95% confidence level.
 
 # Statistical analysis
+
+**TO DO:**
+
+  * Gender bias in panels at stage2 for 2014 and 2015: 
+    * Apply a t-test (given we do not know the mean and standard deviation of the underlying distribution) to the random variable "Acceptance rate".
+    * Apply a test to the distribution of Grade6 in each panel for "male" and "female" to assess if they are drawn from the same distribution. (Mann-Whitney?)  
+
+Examples of tests that I can make:
+
+  * In the gender analysis:
+    * Test if the distributions of grades in each panel for the male and female populations are drawn from the same distribution (this would be the null H0) for each panel. I need to pay particular attention to panels where the number of male and female applications are the same because in that case I can sum over panels without the risk of running into simpson's paradox.
+    
 
 # Summary of results
 

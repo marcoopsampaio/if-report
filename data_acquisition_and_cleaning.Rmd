@@ -586,7 +586,11 @@ But now, in this stage we have information for the various individual panels wit
     # Rename columns
     colnames(data)<-c("Ref","Name","Host",paste("WGrade",round,sep = ""),paste("Grade",round,sep = ""),paste("Status",round,sep = ""))
     # Remove the level "Yes*" to be "Yes" and "*" to "Reserve"
-    levels(data[[paste("Status",round,sep = "")]])<-c("Reserve","No","Yes","Yes")
+    #levels(data[[paste("Status",round,sep = "")]])<-c("Reserve","No","Yes","Yes")
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="yes"]<-"Yes"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="yes*"]<-"Yes"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="*"]<-"Reserve"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="no"]<-"No"
     data$Panel <- rep(panel_name,dim(data)[1])
     data[[paste("PanelRank",round,sep = "")]]<- 1:(dim(data)[1])
     # Return data frame after checks
@@ -878,6 +882,7 @@ NOTE: Some candidate was eliminated after appeal.
 
 ### FINAL DATA FRAME OUTPUT
 Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:
+
 * Ref
 * Name
 * Host
@@ -983,7 +988,7 @@ So we can just add the file 2 information easily
 ```{r}
   data_2014$Grade2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Grade2"]
   data_2014$Status2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Status2"]
-  data1_stage1_xlsx_2014$Rank2 <- 1:nrecords
+  data2_stage1_xlsx_2014$Rank2 <- 1:nrecords
   data_2014$Rank2 <- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),"Rank2"]
   head(data_2014)
   tail(data_2014)
@@ -1027,7 +1032,7 @@ For the remaining files we follow a similar strategy.
 ```
 Now we retrieve information from each panel but we first concatenate in a big dataframe
 ```{r}
-  data1_stage2_xlsx_2014_panels<-rbind(data1_stage2_xlsx_2014_hum,data1_stage2_xlsx_2014_soc,data1_stage2_xlsx_2014_nat,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_med,data1_stage2_xlsx_2014_eng,data1_stage2_xlsx_2014_sci)
+  data1_stage2_xlsx_2014_panels<-rbind(data1_stage2_xlsx_2014_hum,data1_stage2_xlsx_2014_soc,data1_stage2_xlsx_2014_nat,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_med,data1_stage2_xlsx_2014_eng,data1_stage2_xlsx_2014_sci)
 ```
 And finally we re-distribute the values
 ```{r}
@@ -1037,7 +1042,7 @@ And finally we re-distribute the values
     rowpos <- data_2014$Ref==as.character(data1_stage2_xlsx_2014_panels[i,"Ref"])
     data_2014$Grade4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Grade4"]
     data_2014$WGrade4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"WGrade4"]
-    data_2014$Status4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Status4"]
+    data_2014$Status4[rowpos] <- as.character(data1_stage2_xlsx_2014_panels[i,"Status4"])
     data_2014$PanelRank4[rowpos] <- data1_stage2_xlsx_2014_panels[i,"PanelRank4"]
     data_2014$Panel[rowpos] <- data1_stage2_xlsx_2014_panels[i,"Panel"]
   }
@@ -1064,7 +1069,7 @@ Finally let us perform a check to see if the grades match between the global dat
 ```
 Now we retrieve information from each panel but we first concatenate in a big dataframe
 ```{r}
-  data2_stage2_xlsx_2014_panels<-rbind(data2_stage2_xlsx_2014_hum,data2_stage2_xlsx_2014_soc,data2_stage2_xlsx_2014_nat,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_med,data2_stage2_xlsx_2014_eng,data2_stage2_xlsx_2014_sci)
+  data2_stage2_xlsx_2014_panels<-rbind(data2_stage2_xlsx_2014_hum,data2_stage2_xlsx_2014_soc,data2_stage2_xlsx_2014_nat,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_med,data2_stage2_xlsx_2014_eng,data2_stage2_xlsx_2014_sci)
 ```
 And finally we re-distribute the values
 ```{r}
@@ -1074,7 +1079,7 @@ And finally we re-distribute the values
     rowpos <- data_2014$Ref==as.character(data2_stage2_xlsx_2014_panels[i,"Ref"])
     data_2014$Grade5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"Grade5"]
     data_2014$WGrade5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"WGrade5"]
-    data_2014$Status5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"Status5"]
+    data_2014$Status5[rowpos] <- as.character(data2_stage2_xlsx_2014_panels[i,"Status5"])
     data_2014$PanelRank5[rowpos] <- data2_stage2_xlsx_2014_panels[i,"PanelRank5"]
     if(data_2014$Panel[rowpos] != data2_stage2_xlsx_2014_panels[i,"Panel"]){
       warning("Bad panel info!!!!")
@@ -1104,7 +1109,7 @@ Finally let us perform a check to see if the grades match between the global dat
 ```
 Now we retrieve information from each panel but we first concatenate in a big dataframe
 ```{r}
-  data3_stage2_xlsx_2014_panels<-rbind(data3_stage2_xlsx_2014_hum,data3_stage2_xlsx_2014_soc,data3_stage2_xlsx_2014_nat,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_med,data3_stage2_xlsx_2014_eng,data3_stage2_xlsx_2014_sci)
+  data3_stage2_xlsx_2014_panels<-rbind(data3_stage2_xlsx_2014_hum,data3_stage2_xlsx_2014_soc,data3_stage2_xlsx_2014_nat,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_med,data3_stage2_xlsx_2014_eng,data3_stage2_xlsx_2014_sci)
 ```
 And finally we re-distribute the values
 ```{r}
@@ -1114,7 +1119,7 @@ And finally we re-distribute the values
     rowpos <- data_2014$Ref==as.character(data3_stage2_xlsx_2014_panels[i,"Ref"])
     data_2014$Grade6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"Grade6"]
     data_2014$WGrade6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"WGrade6"]
-    data_2014$Status6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"Status6"]
+    data_2014$Status6[rowpos] <- as.character(data3_stage2_xlsx_2014_panels[i,"Status6"])
     data_2014$PanelRank6[rowpos] <- data3_stage2_xlsx_2014_panels[i,"PanelRank6"]
     if(data_2014$Panel[rowpos] != data3_stage2_xlsx_2014_panels[i,"Panel"]){
       warning("Bad panel info!!!!")
@@ -1313,7 +1318,11 @@ But now, in this stage we have information for the various individual panels wit
     # Rename columns
     colnames(data)<-c("Ref","Name",paste("Grade",round,sep = ""),paste("WGrade",round,sep = ""),paste("CVGrade",round,sep = ""),paste("ResearchGrade",round,sep = ""),paste("CareerPlanGrade",round,sep = ""),paste("Status",round,sep = ""))
     # Remove the level "Yes*" to be "Yes" and "*" to "Reserve"
-    levels(data[[paste("Status",round,sep = "")]])<-c("No","Yes","Yes")
+    #levels(data[[paste("Status",round,sep = "")]])<-c("No","Yes","Yes")
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="yes"]<-"Yes"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="yes*"]<-"Yes"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="no"]<-"No"
+    levels(data[[paste("Status",round,sep = "")]])[tolower(levels(data[[paste("Status",round,sep = "")]]))=="*"]<-"Reserve"
     data$Panel <- rep(panel_name,dim(data)[1])
     data[[paste("PanelRank",round,sep = "")]]<- 1:(dim(data)[1])
     # Return data frame after checks
@@ -1386,6 +1395,7 @@ NOTE: In this panel I have removed the last 2 candidates that quit the competiti
 ```
 ### FINAL DATA FRAME OUTPUT
 Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:
+
 * Ref
 * Name
 * Host
@@ -1465,7 +1475,7 @@ So we can just add the file 2 information easily
 ```{r}
   data_2015$Grade2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Grade2"]
   data_2015$Status2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Status2"]
-  data1_stage1_xlsx_2015$Rank2 <- 1:nrecords
+  data2_stage1_xlsx_2015$Rank2 <- 1:nrecords
   data_2015$Rank2 <- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),"Rank2"]
   head(data_2015)
   tail(data_2015)
@@ -1495,7 +1505,7 @@ For the remaining files we follow a similar strategy.
 ```
 Now we retrieve information from each panel but we first concatenate in a big dataframe
 ```{r}
-  data1_stage2_xlsx_2015_panels<-rbind(data1_stage2_xlsx_2015_hum,data1_stage2_xlsx_2015_soc,data1_stage2_xlsx_2015_nat,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_med,data1_stage2_xlsx_2015_eng,data1_stage2_xlsx_2015_sci)
+  data1_stage2_xlsx_2015_panels<-rbind(data1_stage2_xlsx_2015_hum,data1_stage2_xlsx_2015_soc,data1_stage2_xlsx_2015_nat,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_med,data1_stage2_xlsx_2015_eng,data1_stage2_xlsx_2015_sci)
 ```
 And finally we re-distribute the values
 ```{r}
@@ -1508,7 +1518,7 @@ And finally we re-distribute the values
     data_2015$CVGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"CVGrade3"]
     data_2015$ResearchGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"ResearchGrade3"]
     data_2015$CareerPlanGrade3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"CareerPlanGrade3"]
-    data_2015$Status3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"Status3"]
+    data_2015$Status3[rowpos] <- as.character(data1_stage2_xlsx_2015_panels[i,"Status3"])
     data_2015$PanelRank3[rowpos] <- data1_stage2_xlsx_2015_panels[i,"PanelRank3"]
     data_2015$Panel[rowpos] <- data1_stage2_xlsx_2015_panels[i,"Panel"]
   }

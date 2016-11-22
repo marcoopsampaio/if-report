@@ -752,7 +752,11 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     # Rename columns
     colnames(data)&lt;-c(&quot;Ref&quot;,&quot;Name&quot;,&quot;Host&quot;,paste(&quot;WGrade&quot;,round,sep = &quot;&quot;),paste(&quot;Grade&quot;,round,sep = &quot;&quot;),paste(&quot;Status&quot;,round,sep = &quot;&quot;))
     # Remove the level &quot;Yes*&quot; to be &quot;Yes&quot; and &quot;*&quot; to &quot;Reserve&quot;
-    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])&lt;-c(&quot;Reserve&quot;,&quot;No&quot;,&quot;Yes&quot;,&quot;Yes&quot;)
+    #levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])&lt;-c(&quot;Reserve&quot;,&quot;No&quot;,&quot;Yes&quot;,&quot;Yes&quot;)
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;yes&quot;]&lt;-&quot;Yes&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;yes*&quot;]&lt;-&quot;Yes&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;*&quot;]&lt;-&quot;Reserve&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;no&quot;]&lt;-&quot;No&quot;
     data$Panel &lt;- rep(panel_name,dim(data)[1])
     data[[paste(&quot;PanelRank&quot;,round,sep = &quot;&quot;)]]&lt;- 1:(dim(data)[1])
     # Return data frame after checks
@@ -991,7 +995,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ##  $ Host      : Factor w/ 32 levels &quot;Centro de Biologia Ambiental (CBA/FC/UL)&quot;,..: 28 16 27 27 30 24 5 13 11 28 ...
 ##  $ WGrade4   : num  9 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 ...
 ##  $ Grade4    : num  9 9 9 9 9 9 9 9 9 9 ...
-##  $ Status4   : Factor w/ 3 levels &quot;Reserve&quot;,&quot;No&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ Status4   : Factor w/ 2 levels &quot;Reserve&quot;,&quot;Yes&quot;: 2 2 2 2 2 2 2 2 2 2 ...
 ##  $ Panel     : chr  &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; ...
 ##  $ PanelRank4: int  1 2 3 4 5 6 7 8 9 10 ...</code></pre>
 <pre class="r"><code>  head(data1_stage2_xlsx_2014_nat)</code></pre>
@@ -1010,12 +1014,12 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 5             Research Institute for Medicines and Pharmaceutical Sciences (iMed.UL)
 ## 6                                          Instituto Gulbenkian de Ciência (IGC/FCG)
 ##   WGrade4 Grade4 Status4 Panel PanelRank4
-## 1     9.0      9      No   nat          1
-## 2     8.6      9      No   nat          2
-## 3     8.6      9      No   nat          3
-## 4     8.6      9      No   nat          4
-## 5     8.6      9      No   nat          5
-## 6     8.6      9      No   nat          6</code></pre>
+## 1     9.0      9     Yes   nat          1
+## 2     8.6      9     Yes   nat          2
+## 3     8.6      9     Yes   nat          3
+## 4     8.6      9     Yes   nat          4
+## 5     8.6      9     Yes   nat          5
+## 6     8.6      9     Yes   nat          6</code></pre>
 <pre class="r"><code>  tail(data1_stage2_xlsx_2014_nat)</code></pre>
 <pre><code>##              Ref                                                Name
 ## 81 IF/00563/2014 Cristina Maria Lourenco da Cunha Correia de Azevedo
@@ -1416,7 +1420,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ##  $ Host      : Factor w/ 32 levels &quot;Centro de Biologia Ambiental (CBA/FC/UL)&quot;,..: 28 16 27 27 30 24 5 13 11 28 ...
 ##  $ WGrade5   : num  9 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 ...
 ##  $ Grade5    : num  9 9 9 9 9 9 9 9 9 9 ...
-##  $ Status5   : Factor w/ 3 levels &quot;Reserve&quot;,&quot;No&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ Status5   : Factor w/ 2 levels &quot;Reserve&quot;,&quot;Yes&quot;: 2 2 2 2 2 2 2 2 2 2 ...
 ##  $ Panel     : chr  &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; ...
 ##  $ PanelRank5: int  1 2 3 4 5 6 7 8 9 10 ...</code></pre>
 <pre class="r"><code>  head(data2_stage2_xlsx_2014_nat)</code></pre>
@@ -1435,12 +1439,12 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 5             Research Institute for Medicines and Pharmaceutical Sciences (iMed.UL)
 ## 6                                          Instituto Gulbenkian de Ciência (IGC/FCG)
 ##   WGrade5 Grade5 Status5 Panel PanelRank5
-## 1     9.0      9      No   nat          1
-## 2     8.6      9      No   nat          2
-## 3     8.6      9      No   nat          3
-## 4     8.6      9      No   nat          4
-## 5     8.6      9      No   nat          5
-## 6     8.6      9      No   nat          6</code></pre>
+## 1     9.0      9     Yes   nat          1
+## 2     8.6      9     Yes   nat          2
+## 3     8.6      9     Yes   nat          3
+## 4     8.6      9     Yes   nat          4
+## 5     8.6      9     Yes   nat          5
+## 6     8.6      9     Yes   nat          6</code></pre>
 <pre class="r"><code>  tail(data2_stage2_xlsx_2014_nat)</code></pre>
 <pre><code>##              Ref                                                Name
 ## 81 IF/00563/2014 Cristina Maria Lourenco da Cunha Correia de Azevedo
@@ -1841,7 +1845,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ##  $ Host      : Factor w/ 32 levels &quot;Centro de Biologia Ambiental (CBA/FC/UL)&quot;,..: 28 27 28 24 30 13 27 11 5 16 ...
 ##  $ WGrade6   : num  9 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 8.6 ...
 ##  $ Grade6    : num  9 9 9 9 9 9 9 9 9 9 ...
-##  $ Status6   : Factor w/ 3 levels &quot;Reserve&quot;,&quot;No&quot;,..: 2 2 2 2 2 2 2 2 2 2 ...
+##  $ Status6   : Factor w/ 2 levels &quot;Reserve&quot;,&quot;Yes&quot;: 2 2 2 2 2 2 2 2 2 2 ...
 ##  $ Panel     : chr  &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; &quot;nat&quot; ...
 ##  $ PanelRank6: int  1 2 3 4 5 6 7 8 9 10 ...</code></pre>
 <pre class="r"><code>  head(data3_stage2_xlsx_2014_nat)</code></pre>
@@ -1860,12 +1864,12 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 5             Research Institute for Medicines and Pharmaceutical Sciences (iMed.UL)
 ## 6                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ##   WGrade6 Grade6 Status6 Panel PanelRank6
-## 1     9.0      9      No   nat          1
-## 2     8.6      9      No   nat          2
-## 3     8.6      9      No   nat          3
-## 4     8.6      9      No   nat          4
-## 5     8.6      9      No   nat          5
-## 6     8.6      9      No   nat          6</code></pre>
+## 1     9.0      9     Yes   nat          1
+## 2     8.6      9     Yes   nat          2
+## 3     8.6      9     Yes   nat          3
+## 4     8.6      9     Yes   nat          4
+## 5     8.6      9     Yes   nat          5
+## 6     8.6      9     Yes   nat          6</code></pre>
 <pre class="r"><code>  tail(data3_stage2_xlsx_2014_nat)</code></pre>
 <pre><code>##              Ref                                            Name
 ## 81 IF/01756/2014                          João José Inácio Silva
@@ -2004,7 +2008,37 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 </div>
 <div id="final-data-frame-output" class="section level3">
 <h3><span class="header-section-number">2.2.3</span> FINAL DATA FRAME OUTPUT</h3>
-<p>Now we are going to merge all the data from the various data frames. We want a data frame with the following columns: * Ref * Name * Host * Panel * Grade1 * Rank1 * Status1 * Grade2 * Rank2 * Status2 * Grade3 * Rank3 * Status3 * Grade4 * WGrade4 * Rank4 * PanelRank4 * Status4 * Grade5 * WGrade5 * Rank5 * PanelRank5 * Status5 * Grade6 * WGrade6 * Rank6 * PanelRank6 * Status6</p>
+<p>Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:</p>
+<ul>
+<li>Ref</li>
+<li>Name</li>
+<li>Host</li>
+<li>Panel</li>
+<li>Grade1</li>
+<li>Rank1</li>
+<li>Status1</li>
+<li>Grade2</li>
+<li>Rank2</li>
+<li>Status2</li>
+<li>Grade3</li>
+<li>Rank3</li>
+<li>Status3</li>
+<li>Grade4</li>
+<li>WGrade4</li>
+<li>Rank4</li>
+<li>PanelRank4</li>
+<li>Status4</li>
+<li>Grade5</li>
+<li>WGrade5</li>
+<li>Rank5</li>
+<li>PanelRank5</li>
+<li>Status5</li>
+<li>Grade6</li>
+<li>WGrade6</li>
+<li>Rank6</li>
+<li>PanelRank6</li>
+<li>Status6</li>
+</ul>
 <p>Let us first list the global data_frames and their dimensions</p>
 <pre class="r"><code>  dim(data1_stage1_xlsx_2014)</code></pre>
 <pre><code>## [1] 1398    5</code></pre>
@@ -2313,7 +2347,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 <p>So we can just add the file 2 information easily</p>
 <pre class="r"><code>  data_2014$Grade2 &lt;- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),&quot;Grade2&quot;]
   data_2014$Status2 &lt;- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),&quot;Status2&quot;]
-  data1_stage1_xlsx_2014$Rank2 &lt;- 1:nrecords
+  data2_stage1_xlsx_2014$Rank2 &lt;- 1:nrecords
   data_2014$Rank2 &lt;- data2_stage1_xlsx_2014[order(data2_stage1_xlsx_2014$Ref),&quot;Rank2&quot;]
   head(data_2014)</code></pre>
 <pre><code>##             Ref                                   Name
@@ -2330,27 +2364,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1 empty    7.5   232     Yes    7.5     Yes     NA    NA   empty     NA
-## 2 empty    8.0    74     Yes    8.0     Yes     NA    NA   empty     NA
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6 empty    7.5   233     Yes    7.5     Yes     NA    NA   empty     NA
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 2      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6      NA    NA         NA   empty     NA      NA    NA         NA   empty
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1 empty    7.5   232     Yes    7.5   233     Yes     NA    NA   empty
+## 2 empty    8.0    74     Yes    8.0    74     Yes     NA    NA   empty
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6 empty    7.5   233     Yes    7.5   234     Yes     NA    NA   empty
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 2     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6     NA      NA    NA         NA   empty     NA      NA    NA         NA
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1   empty     NA      NA    NA         NA   empty
+## 2   empty     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6   empty     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2366,27 +2400,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394 empty    7.5   465     Yes    7.5     Yes     NA    NA   empty     NA
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394      NA    NA         NA   empty     NA      NA    NA         NA
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394   empty     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394 empty    7.5   465     Yes    7.5   466     Yes     NA    NA   empty
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394     NA      NA    NA         NA   empty     NA      NA    NA
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         NA   empty     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Let us just check that there are only small differences.</p>
 <pre class="r"><code>  sum(is.na(data_2014$Grade1))</code></pre>
 <pre><code>## [1] 7</code></pre>
@@ -2425,27 +2459,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1 empty    7.5   232     Yes    7.5     Yes    7.5   352     Yes     NA
-## 2 empty    8.0    74     Yes    8.0     Yes    8.0   144     Yes     NA
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6 empty    7.5   233     Yes    7.5     Yes    7.5   353     Yes     NA
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 2      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6      NA    NA         NA   empty     NA      NA    NA         NA   empty
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1 empty    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2 empty    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6 empty    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 2     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6     NA      NA    NA         NA   empty     NA      NA    NA         NA
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1   empty     NA      NA    NA         NA   empty
+## 2   empty     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6   empty     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2461,27 +2495,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394 empty    7.5   465     Yes    7.5     Yes    7.5   459     Yes     NA
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394      NA    NA         NA   empty     NA      NA    NA         NA
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394   empty     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394 empty    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394     NA      NA    NA         NA   empty     NA      NA    NA
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         NA   empty     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>For the remaining files we follow a similar strategy. <strong>file 4</strong></p>
 <pre class="r"><code>  nrecords4 &lt;- dim(data1_stage2_xlsx_2014_global)[1]
   data1_stage2_xlsx_2014_global$Rank4 &lt;- 1:nrecords4
@@ -2505,27 +2539,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1 empty    7.5   232     Yes    7.5     Yes    7.5   352     Yes     NA
-## 2 empty    8.0    74     Yes    8.0     Yes    8.0   144     Yes     NA
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6 empty    7.5   233     Yes    7.5     Yes    7.5   353     Yes     NA
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1      NA   236         NA   empty     NA      NA    NA         NA   empty
-## 2      NA    81         NA   empty     NA      NA    NA         NA   empty
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6      NA   237         NA   empty     NA      NA    NA         NA   empty
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1 empty    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2 empty    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6 empty    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1     NA      NA   236         NA   empty     NA      NA    NA         NA
+## 2     NA      NA    81         NA   empty     NA      NA    NA         NA
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6     NA      NA   237         NA   empty     NA      NA    NA         NA
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1   empty     NA      NA    NA         NA   empty
+## 2   empty     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6   empty     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2541,29 +2575,29 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394 empty    7.5   465     Yes    7.5     Yes    7.5   459     Yes     NA
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394      NA   235         NA   empty     NA      NA    NA         NA
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394   empty     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394 empty    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394     NA      NA   235         NA   empty     NA      NA    NA
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         NA   empty     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Now we retrieve information from each panel but we first concatenate in a big dataframe</p>
-<pre class="r"><code>  data1_stage2_xlsx_2014_panels&lt;-rbind(data1_stage2_xlsx_2014_hum,data1_stage2_xlsx_2014_soc,data1_stage2_xlsx_2014_nat,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_med,data1_stage2_xlsx_2014_eng,data1_stage2_xlsx_2014_sci)</code></pre>
+<pre class="r"><code>  data1_stage2_xlsx_2014_panels&lt;-rbind(data1_stage2_xlsx_2014_hum,data1_stage2_xlsx_2014_soc,data1_stage2_xlsx_2014_nat,data1_stage2_xlsx_2014_env,data1_stage2_xlsx_2014_med,data1_stage2_xlsx_2014_eng,data1_stage2_xlsx_2014_sci)</code></pre>
 <p>And finally we re-distribute the values</p>
 <pre class="r"><code>  nrecords4 &lt;- dim(data1_stage2_xlsx_2014_panels)[1]
   for (i in 1:nrecords4) {
@@ -2571,7 +2605,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     rowpos &lt;- data_2014$Ref==as.character(data1_stage2_xlsx_2014_panels[i,&quot;Ref&quot;])
     data_2014$Grade4[rowpos] &lt;- data1_stage2_xlsx_2014_panels[i,&quot;Grade4&quot;]
     data_2014$WGrade4[rowpos] &lt;- data1_stage2_xlsx_2014_panels[i,&quot;WGrade4&quot;]
-    data_2014$Status4[rowpos] &lt;- data1_stage2_xlsx_2014_panels[i,&quot;Status4&quot;]
+    data_2014$Status4[rowpos] &lt;- as.character(data1_stage2_xlsx_2014_panels[i,&quot;Status4&quot;])
     data_2014$PanelRank4[rowpos] &lt;- data1_stage2_xlsx_2014_panels[i,&quot;PanelRank4&quot;]
     data_2014$Panel[rowpos] &lt;- data1_stage2_xlsx_2014_panels[i,&quot;Panel&quot;]
   }
@@ -2590,27 +2624,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1   nat    7.5   232     Yes    7.5     Yes    7.5   352     Yes      7
-## 2   med    8.0    74     Yes    8.0     Yes    8.0   144     Yes      8
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6   sci    7.5   233     Yes    7.5     Yes    7.5   353     Yes      7
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1     7.0   236         53       1     NA      NA    NA         NA   empty
-## 2     8.5    81          7       3     NA      NA    NA         NA   empty
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6     6.6   237         89       1     NA      NA    NA         NA   empty
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve     NA      NA    NA         NA
+## 2      8     8.5    81          7     Yes     NA      NA    NA         NA
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve     NA      NA    NA         NA
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1   empty     NA      NA    NA         NA   empty
+## 2   empty     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6   empty     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2626,27 +2660,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394   env    7.5   465     Yes    7.5     Yes    7.5   459     Yes      8
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394     8.1   235         26       3     NA      NA    NA         NA
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394   empty     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394   env    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394      8     8.1   235         26     Yes     NA      NA    NA
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         NA   empty     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:</p>
 <pre class="r"><code>  sum(data_2014[!is.na(data_2014$Grade4),&quot;Grade4&quot;]-data1_stage2_xlsx_2014_global[order(data1_stage2_xlsx_2014_global$Ref),&quot;Grade4&quot;])</code></pre>
 <pre><code>## [1] 0</code></pre>
@@ -2673,27 +2707,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1   nat    7.5   232     Yes    7.5     Yes    7.5   352     Yes      7
-## 2   med    8.0    74     Yes    8.0     Yes    8.0   144     Yes      8
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6   sci    7.5   233     Yes    7.5     Yes    7.5   353     Yes      7
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1     7.0   236         53       1     NA      NA   237         NA   empty
-## 2     8.5    81          7       3     NA      NA    81         NA   empty
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6     6.6   237         89       1     NA      NA   238         NA   empty
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve     NA      NA   237         NA
+## 2      8     8.5    81          7     Yes     NA      NA    81         NA
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve     NA      NA   238         NA
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1   empty     NA      NA    NA         NA   empty
+## 2   empty     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6   empty     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2709,29 +2743,29 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394   env    7.5   465     Yes    7.5     Yes    7.5   459     Yes      8
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394     8.1   235         26       3     NA      NA   235         NA
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394   empty     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394   env    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394      8     8.1   235         26     Yes     NA      NA   235
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         NA   empty     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Now we retrieve information from each panel but we first concatenate in a big dataframe</p>
-<pre class="r"><code>  data2_stage2_xlsx_2014_panels&lt;-rbind(data2_stage2_xlsx_2014_hum,data2_stage2_xlsx_2014_soc,data2_stage2_xlsx_2014_nat,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_med,data2_stage2_xlsx_2014_eng,data2_stage2_xlsx_2014_sci)</code></pre>
+<pre class="r"><code>  data2_stage2_xlsx_2014_panels&lt;-rbind(data2_stage2_xlsx_2014_hum,data2_stage2_xlsx_2014_soc,data2_stage2_xlsx_2014_nat,data2_stage2_xlsx_2014_env,data2_stage2_xlsx_2014_med,data2_stage2_xlsx_2014_eng,data2_stage2_xlsx_2014_sci)</code></pre>
 <p>And finally we re-distribute the values</p>
 <pre class="r"><code>  nrecords5 &lt;- dim(data2_stage2_xlsx_2014_panels)[1]
   for (i in 1:nrecords5) {
@@ -2739,7 +2773,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     rowpos &lt;- data_2014$Ref==as.character(data2_stage2_xlsx_2014_panels[i,&quot;Ref&quot;])
     data_2014$Grade5[rowpos] &lt;- data2_stage2_xlsx_2014_panels[i,&quot;Grade5&quot;]
     data_2014$WGrade5[rowpos] &lt;- data2_stage2_xlsx_2014_panels[i,&quot;WGrade5&quot;]
-    data_2014$Status5[rowpos] &lt;- data2_stage2_xlsx_2014_panels[i,&quot;Status5&quot;]
+    data_2014$Status5[rowpos] &lt;- as.character(data2_stage2_xlsx_2014_panels[i,&quot;Status5&quot;])
     data_2014$PanelRank5[rowpos] &lt;- data2_stage2_xlsx_2014_panels[i,&quot;PanelRank5&quot;]
     if(data_2014$Panel[rowpos] != data2_stage2_xlsx_2014_panels[i,&quot;Panel&quot;]){
       warning(&quot;Bad panel info!!!!&quot;)
@@ -2761,27 +2795,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1   nat    7.5   232     Yes    7.5     Yes    7.5   352     Yes      7
-## 2   med    8.0    74     Yes    8.0     Yes    8.0   144     Yes      8
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6   sci    7.5   233     Yes    7.5     Yes    7.5   353     Yes      7
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1     7.0   236         53       1      7     7.0   237         53       1
-## 2     8.5    81          7       3      8     8.5    81          7       3
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6     6.6   237         89       1      7     6.6   238         89       1
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA    NA         NA   empty
-## 2     NA      NA    NA         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA    NA         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve      7     7.0   237         53
+## 2      8     8.5    81          7     Yes      8     8.5    81          7
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve      7     6.6   238         89
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1 Reserve     NA      NA    NA         NA   empty
+## 2     Yes     NA      NA    NA         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6 Reserve     NA      NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2797,27 +2831,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394   env    7.5   465     Yes    7.5     Yes    7.5   459     Yes      8
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394     8.1   235         26       3      8     8.1   235         26
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394       3     NA      NA    NA         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394   env    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394      8     8.1   235         26     Yes      8     8.1   235
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         26     Yes     NA      NA    NA         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:</p>
 <pre class="r"><code>  sum(data_2014[!is.na(data_2014$Grade5),&quot;Grade5&quot;]-data2_stage2_xlsx_2014_global[order(data2_stage2_xlsx_2014_global$Ref),&quot;Grade5&quot;])</code></pre>
 <pre><code>## [1] 0</code></pre>
@@ -2844,27 +2878,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1   nat    7.5   232     Yes    7.5     Yes    7.5   352     Yes      7
-## 2   med    8.0    74     Yes    8.0     Yes    8.0   144     Yes      8
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6   sci    7.5   233     Yes    7.5     Yes    7.5   353     Yes      7
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1     7.0   236         53       1      7     7.0   237         53       1
-## 2     8.5    81          7       3      8     8.5    81          7       3
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6     6.6   237         89       1      7     6.6   238         89       1
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1     NA      NA   347         NA   empty
-## 2     NA      NA   157         NA   empty
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6     NA      NA   348         NA   empty</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve      7     7.0   237         53
+## 2      8     8.5    81          7     Yes      8     8.5    81          7
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve      7     6.6   238         89
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1 Reserve     NA      NA   347         NA   empty
+## 2     Yes     NA      NA   157         NA   empty
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6 Reserve     NA      NA   348         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2880,29 +2914,29 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394   env    7.5   465     Yes    7.5     Yes    7.5   459     Yes      8
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394     8.1   235         26       3      8     8.1   235         26
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394       3     NA      NA   232         NA   empty
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394   env    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394      8     8.1   235         26     Yes      8     8.1   235
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         26     Yes     NA      NA   232         NA   empty
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Now we retrieve information from each panel but we first concatenate in a big dataframe</p>
-<pre class="r"><code>  data3_stage2_xlsx_2014_panels&lt;-rbind(data3_stage2_xlsx_2014_hum,data3_stage2_xlsx_2014_soc,data3_stage2_xlsx_2014_nat,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_med,data3_stage2_xlsx_2014_eng,data3_stage2_xlsx_2014_sci)</code></pre>
+<pre class="r"><code>  data3_stage2_xlsx_2014_panels&lt;-rbind(data3_stage2_xlsx_2014_hum,data3_stage2_xlsx_2014_soc,data3_stage2_xlsx_2014_nat,data3_stage2_xlsx_2014_env,data3_stage2_xlsx_2014_med,data3_stage2_xlsx_2014_eng,data3_stage2_xlsx_2014_sci)</code></pre>
 <p>And finally we re-distribute the values</p>
 <pre class="r"><code>  nrecords6 &lt;- dim(data3_stage2_xlsx_2014_panels)[1]
   for (i in 1:nrecords6) {
@@ -2910,7 +2944,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     rowpos &lt;- data_2014$Ref==as.character(data3_stage2_xlsx_2014_panels[i,&quot;Ref&quot;])
     data_2014$Grade6[rowpos] &lt;- data3_stage2_xlsx_2014_panels[i,&quot;Grade6&quot;]
     data_2014$WGrade6[rowpos] &lt;- data3_stage2_xlsx_2014_panels[i,&quot;WGrade6&quot;]
-    data_2014$Status6[rowpos] &lt;- data3_stage2_xlsx_2014_panels[i,&quot;Status6&quot;]
+    data_2014$Status6[rowpos] &lt;- as.character(data3_stage2_xlsx_2014_panels[i,&quot;Status6&quot;])
     data_2014$PanelRank6[rowpos] &lt;- data3_stage2_xlsx_2014_panels[i,&quot;PanelRank6&quot;]
     if(data_2014$Panel[rowpos] != data3_stage2_xlsx_2014_panels[i,&quot;Panel&quot;]){
       warning(&quot;Bad panel info!!!!&quot;)
@@ -2932,27 +2966,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
 ## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
 ## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1   nat    7.5   232     Yes    7.5     Yes    7.5   352     Yes      7
-## 2   med    8.0    74     Yes    8.0     Yes    8.0   144     Yes      8
-## 3 empty    6.5   698      No    6.5      No     NA    NA   empty     NA
-## 4 empty    7.0   511      No    7.0      No     NA    NA   empty     NA
-## 5 empty    7.0   512      No    7.0      No     NA    NA   empty     NA
-## 6   sci    7.5   233     Yes    7.5     Yes    7.5   353     Yes      7
-##   WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5 Status5
-## 1     7.0   236         53       1      7     7.0   237         53       1
-## 2     8.5    81          7       3      8     8.5    81          7       3
-## 3      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 4      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 5      NA    NA         NA   empty     NA      NA    NA         NA   empty
-## 6     6.6   237         89       1      7     6.6   238         89       1
-##   Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1      7     7.0   347         57       1
-## 2      8     8.5   157          8       3
-## 3     NA      NA    NA         NA   empty
-## 4     NA      NA    NA         NA   empty
-## 5     NA      NA    NA         NA   empty
-## 6      7     6.6   348         91       1</code></pre>
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3 empty    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4 empty    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5 empty    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve      7     7.0   237         53
+## 2      8     8.5    81          7     Yes      8     8.5    81          7
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve      7     6.6   238         89
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1 Reserve      7     7.0   347         57 Reserve
+## 2     Yes      8     8.5   157          8     Yes
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6 Reserve      7     6.6   348         91 Reserve</code></pre>
 <pre class="r"><code>  tail(data_2014)</code></pre>
 <pre><code>##                Ref                              Name
 ## 1393 IF/01771/2014              Ana Serrano Tellería
@@ -2968,27 +3002,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1396              Centro de Literaturas e Culturas Lusófonas e Europeia (CLEPUL/FL/UL)
 ## 1397                                     Instituto de Estudos Medievais (IEM/FCSH/UNL)
 ## 1398                                Instituto de Plasma e Fusão Nuclear (IPFN/IST/UTL)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 Rank3 Status3 Grade4
-## 1393 empty    6.5   906      No    6.5      No     NA    NA   empty     NA
-## 1394   env    7.5   465     Yes    7.5     Yes    7.5   459     Yes      8
-## 1395 empty    7.0   697      No    7.0      No     NA    NA   empty     NA
-## 1396 empty    3.5  1381      No    3.5      No     NA    NA   empty     NA
-## 1397 empty    6.0  1106      No    6.0      No     NA    NA   empty     NA
-## 1398 empty    4.0  1367      No    4.0      No     NA    NA   empty     NA
-##      WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
-## 1393      NA    NA         NA   empty     NA      NA    NA         NA
-## 1394     8.1   235         26       3      8     8.1   235         26
-## 1395      NA    NA         NA   empty     NA      NA    NA         NA
-## 1396      NA    NA         NA   empty     NA      NA    NA         NA
-## 1397      NA    NA         NA   empty     NA      NA    NA         NA
-## 1398      NA    NA         NA   empty     NA      NA    NA         NA
-##      Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
-## 1393   empty     NA      NA    NA         NA   empty
-## 1394       3      8     8.1   232         26       3
-## 1395   empty     NA      NA    NA         NA   empty
-## 1396   empty     NA      NA    NA         NA   empty
-## 1397   empty     NA      NA    NA         NA   empty
-## 1398   empty     NA      NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1393 empty    6.5   906      No    6.5   907      No     NA    NA   empty
+## 1394   env    7.5   465     Yes    7.5   466     Yes    7.5   459     Yes
+## 1395 empty    7.0   697      No    7.0   700      No     NA    NA   empty
+## 1396 empty    3.5  1381      No    3.5  1381      No     NA    NA   empty
+## 1397 empty    6.0  1106      No    6.0  1107      No     NA    NA   empty
+## 1398 empty    4.0  1367      No    4.0  1367      No     NA    NA   empty
+##      Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5
+## 1393     NA      NA    NA         NA   empty     NA      NA    NA
+## 1394      8     8.1   235         26     Yes      8     8.1   235
+## 1395     NA      NA    NA         NA   empty     NA      NA    NA
+## 1396     NA      NA    NA         NA   empty     NA      NA    NA
+## 1397     NA      NA    NA         NA   empty     NA      NA    NA
+## 1398     NA      NA    NA         NA   empty     NA      NA    NA
+##      PanelRank5 Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1393         NA   empty     NA      NA    NA         NA   empty
+## 1394         26     Yes      8     8.1   232         26     Yes
+## 1395         NA   empty     NA      NA    NA         NA   empty
+## 1396         NA   empty     NA      NA    NA         NA   empty
+## 1397         NA   empty     NA      NA    NA         NA   empty
+## 1398         NA   empty     NA      NA    NA         NA   empty</code></pre>
 <p>Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:</p>
 <pre class="r"><code>  sum(data_2014[!is.na(data_2014$Grade6),&quot;Grade6&quot;]-data3_stage2_xlsx_2014_global[order(data3_stage2_xlsx_2014_global$Ref),&quot;Grade6&quot;])</code></pre>
 <pre><code>## [1] 0</code></pre>
@@ -3182,7 +3216,11 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     # Rename columns
     colnames(data)&lt;-c(&quot;Ref&quot;,&quot;Name&quot;,paste(&quot;Grade&quot;,round,sep = &quot;&quot;),paste(&quot;WGrade&quot;,round,sep = &quot;&quot;),paste(&quot;CVGrade&quot;,round,sep = &quot;&quot;),paste(&quot;ResearchGrade&quot;,round,sep = &quot;&quot;),paste(&quot;CareerPlanGrade&quot;,round,sep = &quot;&quot;),paste(&quot;Status&quot;,round,sep = &quot;&quot;))
     # Remove the level &quot;Yes*&quot; to be &quot;Yes&quot; and &quot;*&quot; to &quot;Reserve&quot;
-    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])&lt;-c(&quot;No&quot;,&quot;Yes&quot;,&quot;Yes&quot;)
+    #levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])&lt;-c(&quot;No&quot;,&quot;Yes&quot;,&quot;Yes&quot;)
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;yes&quot;]&lt;-&quot;Yes&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;yes*&quot;]&lt;-&quot;Yes&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;no&quot;]&lt;-&quot;No&quot;
+    levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]])[tolower(levels(data[[paste(&quot;Status&quot;,round,sep = &quot;&quot;)]]))==&quot;*&quot;]&lt;-&quot;Reserve&quot;
     data$Panel &lt;- rep(panel_name,dim(data)[1])
     data[[paste(&quot;PanelRank&quot;,round,sep = &quot;&quot;)]]&lt;- 1:(dim(data)[1])
     # Return data frame after checks
@@ -3543,7 +3581,27 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 </div>
 <div id="final-data-frame-output-1" class="section level3">
 <h3><span class="header-section-number">2.3.3</span> FINAL DATA FRAME OUTPUT</h3>
-<p>Now we are going to merge all the data from the various data frames. We want a data frame with the following columns: * Ref * Name * Host * Panel * Grade1 * Rank1 * Status1 * Grade2 * Rank2 * Status2 * Grade3 * WGrade3 * CVGrade3 * ResearchGrade3 * CareerPlanGrade3 * Rank3 * PanelRank3 * Status3</p>
+<p>Now we are going to merge all the data from the various data frames. We want a data frame with the following columns:</p>
+<ul>
+<li>Ref</li>
+<li>Name</li>
+<li>Host</li>
+<li>Panel</li>
+<li>Grade1</li>
+<li>Rank1</li>
+<li>Status1</li>
+<li>Grade2</li>
+<li>Rank2</li>
+<li>Status2</li>
+<li>Grade3</li>
+<li>WGrade3</li>
+<li>CVGrade3</li>
+<li>ResearchGrade3</li>
+<li>CareerPlanGrade3</li>
+<li>Rank3</li>
+<li>PanelRank3</li>
+<li>Status3</li>
+</ul>
 <p>Let us first list the global data_frames and their dimensions</p>
 <pre class="r"><code>  dim(data1_stage1_xlsx_2015)</code></pre>
 <pre><code>## [1] 1367    5</code></pre>
@@ -3791,7 +3849,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 <p>So we can just add the file 2 information easily</p>
 <pre class="r"><code>  data_2015$Grade2 &lt;- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),&quot;Grade2&quot;]
   data_2015$Status2 &lt;- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),&quot;Status2&quot;]
-  data1_stage1_xlsx_2015$Rank2 &lt;- 1:nrecords
+  data2_stage1_xlsx_2015$Rank2 &lt;- 1:nrecords
   data_2015$Rank2 &lt;- data2_stage1_xlsx_2015[order(data2_stage1_xlsx_2015$Ref),&quot;Rank2&quot;]
   head(data_2015)</code></pre>
 <pre><code>##             Ref                                     Name
@@ -3808,13 +3866,13 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                                   Unidade de Ciências Biomoleculares Aplicadas (UCIBIO)
 ## 5                Unidade de Química Orgânica, Produtos Naturais e Agroalimentares (DQ/UA)
 ## 6   Centro de Investigação em Biodiversidade de Recursos Genéticos (CIBIO/ICETA-Porto/UP)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1 empty    7.0   452     Yes    7.0     Yes     NA      NA       NA
-## 2 empty    6.5   694      No    6.5      No     NA      NA       NA
-## 3 empty    7.5   247     Yes    7.5     Yes     NA      NA       NA
-## 4 empty    8.5    13     Yes    8.5     Yes     NA      NA       NA
-## 5 empty    6.0   975      No    6.0      No     NA      NA       NA
-## 6 empty    3.5  1350      No    3.5      No     NA      NA       NA
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3 CVGrade3
+## 1 empty    7.0   452     Yes    7.0   455     Yes     NA      NA       NA
+## 2 empty    6.5   694      No    6.5   700      No     NA      NA       NA
+## 3 empty    7.5   247     Yes    7.5   248     Yes     NA      NA       NA
+## 4 empty    8.5    13     Yes    8.5    13     Yes     NA      NA       NA
+## 5 empty    6.0   975      No    6.0   984      No     NA      NA       NA
+## 6 empty    3.5  1350      No    3.5  1356      No     NA      NA       NA
 ##   ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
 ## 1             NA               NA    NA         NA   empty
 ## 2             NA               NA    NA         NA   empty
@@ -3837,20 +3895,20 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1365     Laboratório Associado para a Química Verde - Tecnologias e Processos Limpos (REQUIMTE)
 ## 1366                                                           Centro de Matemática (CM/FCT/UC)
 ## 1367                                                     INESC Tecnologia e Ciência (INESC TEC)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1362 empty    4.0  1349      No    4.0      No     NA      NA       NA
-## 1363 empty    7.0   693     Yes    7.0     Yes     NA      NA       NA
-## 1364 empty    7.5   451     Yes    7.5     Yes     NA      NA       NA
-## 1365 empty    4.5  1332      No    4.5      No     NA      NA       NA
-## 1366 empty    6.5   973      No    6.5      No     NA      NA       NA
-## 1367 empty    6.5   974      No    6.5      No     NA      NA       NA
-##      ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
-## 1362             NA               NA    NA         NA   empty
-## 1363             NA               NA    NA         NA   empty
-## 1364             NA               NA    NA         NA   empty
-## 1365             NA               NA    NA         NA   empty
-## 1366             NA               NA    NA         NA   empty
-## 1367             NA               NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3
+## 1362 empty    4.0  1349      No    4.0  1355      No     NA      NA
+## 1363 empty    7.0   693     Yes    7.0   660     Yes     NA      NA
+## 1364 empty    7.5   451     Yes    7.5   452     Yes     NA      NA
+## 1365 empty    4.5  1332      No    4.5  1338      No     NA      NA
+## 1366 empty    6.5   973      No    6.5   978      No     NA      NA
+## 1367 empty    6.5   974      No    6.5   979      No     NA      NA
+##      CVGrade3 ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
+## 1362       NA             NA               NA    NA         NA   empty
+## 1363       NA             NA               NA    NA         NA   empty
+## 1364       NA             NA               NA    NA         NA   empty
+## 1365       NA             NA               NA    NA         NA   empty
+## 1366       NA             NA               NA    NA         NA   empty
+## 1367       NA             NA               NA    NA         NA   empty</code></pre>
 <p>Let us just check that there are only small differences.</p>
 <pre class="r"><code>  sum(is.na(data_2015$Grade1))</code></pre>
 <pre><code>## [1] 0</code></pre>
@@ -3887,13 +3945,13 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                                   Unidade de Ciências Biomoleculares Aplicadas (UCIBIO)
 ## 5                Unidade de Química Orgânica, Produtos Naturais e Agroalimentares (DQ/UA)
 ## 6   Centro de Investigação em Biodiversidade de Recursos Genéticos (CIBIO/ICETA-Porto/UP)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1 empty    7.0   452     Yes    7.0     Yes     NA      NA       NA
-## 2 empty    6.5   694      No    6.5      No     NA      NA       NA
-## 3 empty    7.5   247     Yes    7.5     Yes     NA      NA       NA
-## 4 empty    8.5    13     Yes    8.5     Yes     NA      NA       NA
-## 5 empty    6.0   975      No    6.0      No     NA      NA       NA
-## 6 empty    3.5  1350      No    3.5      No     NA      NA       NA
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3 CVGrade3
+## 1 empty    7.0   452     Yes    7.0   455     Yes     NA      NA       NA
+## 2 empty    6.5   694      No    6.5   700      No     NA      NA       NA
+## 3 empty    7.5   247     Yes    7.5   248     Yes     NA      NA       NA
+## 4 empty    8.5    13     Yes    8.5    13     Yes     NA      NA       NA
+## 5 empty    6.0   975      No    6.0   984      No     NA      NA       NA
+## 6 empty    3.5  1350      No    3.5  1356      No     NA      NA       NA
 ##   ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
 ## 1             NA               NA   235         NA   empty
 ## 2             NA               NA    NA         NA   empty
@@ -3916,22 +3974,22 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1365     Laboratório Associado para a Química Verde - Tecnologias e Processos Limpos (REQUIMTE)
 ## 1366                                                           Centro de Matemática (CM/FCT/UC)
 ## 1367                                                     INESC Tecnologia e Ciência (INESC TEC)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1362 empty    4.0  1349      No    4.0      No     NA      NA       NA
-## 1363 empty    7.0   693     Yes    7.0     Yes     NA      NA       NA
-## 1364 empty    7.5   451     Yes    7.5     Yes     NA      NA       NA
-## 1365 empty    4.5  1332      No    4.5      No     NA      NA       NA
-## 1366 empty    6.5   973      No    6.5      No     NA      NA       NA
-## 1367 empty    6.5   974      No    6.5      No     NA      NA       NA
-##      ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
-## 1362             NA               NA    NA         NA   empty
-## 1363             NA               NA   689         NA   empty
-## 1364             NA               NA   485         NA   empty
-## 1365             NA               NA    NA         NA   empty
-## 1366             NA               NA    NA         NA   empty
-## 1367             NA               NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3
+## 1362 empty    4.0  1349      No    4.0  1355      No     NA      NA
+## 1363 empty    7.0   693     Yes    7.0   660     Yes     NA      NA
+## 1364 empty    7.5   451     Yes    7.5   452     Yes     NA      NA
+## 1365 empty    4.5  1332      No    4.5  1338      No     NA      NA
+## 1366 empty    6.5   973      No    6.5   978      No     NA      NA
+## 1367 empty    6.5   974      No    6.5   979      No     NA      NA
+##      CVGrade3 ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
+## 1362       NA             NA               NA    NA         NA   empty
+## 1363       NA             NA               NA   689         NA   empty
+## 1364       NA             NA               NA   485         NA   empty
+## 1365       NA             NA               NA    NA         NA   empty
+## 1366       NA             NA               NA    NA         NA   empty
+## 1367       NA             NA               NA    NA         NA   empty</code></pre>
 <p>Now we retrieve information from each panel but we first concatenate in a big dataframe</p>
-<pre class="r"><code>  data1_stage2_xlsx_2015_panels&lt;-rbind(data1_stage2_xlsx_2015_hum,data1_stage2_xlsx_2015_soc,data1_stage2_xlsx_2015_nat,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_med,data1_stage2_xlsx_2015_eng,data1_stage2_xlsx_2015_sci)</code></pre>
+<pre class="r"><code>  data1_stage2_xlsx_2015_panels&lt;-rbind(data1_stage2_xlsx_2015_hum,data1_stage2_xlsx_2015_soc,data1_stage2_xlsx_2015_nat,data1_stage2_xlsx_2015_env,data1_stage2_xlsx_2015_med,data1_stage2_xlsx_2015_eng,data1_stage2_xlsx_2015_sci)</code></pre>
 <p>And finally we re-distribute the values</p>
 <pre class="r"><code>  nrecords3 &lt;- dim(data1_stage2_xlsx_2015_panels)[1]
   for (i in 1:nrecords3) {
@@ -3942,7 +4000,7 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
     data_2015$CVGrade3[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;CVGrade3&quot;]
     data_2015$ResearchGrade3[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;ResearchGrade3&quot;]
     data_2015$CareerPlanGrade3[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;CareerPlanGrade3&quot;]
-    data_2015$Status3[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;Status3&quot;]
+    data_2015$Status3[rowpos] &lt;- as.character(data1_stage2_xlsx_2015_panels[i,&quot;Status3&quot;])
     data_2015$PanelRank3[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;PanelRank3&quot;]
     data_2015$Panel[rowpos] &lt;- data1_stage2_xlsx_2015_panels[i,&quot;Panel&quot;]
   }
@@ -3961,18 +4019,18 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 4                                   Unidade de Ciências Biomoleculares Aplicadas (UCIBIO)
 ## 5                Unidade de Química Orgânica, Produtos Naturais e Agroalimentares (DQ/UA)
 ## 6   Centro de Investigação em Biodiversidade de Recursos Genéticos (CIBIO/ICETA-Porto/UP)
-##   Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1   nat    7.0   452     Yes    7.0     Yes      8     7.6        8
-## 2 empty    6.5   694      No    6.5      No     NA      NA       NA
-## 3   nat    7.5   247     Yes    7.5     Yes      8     7.9        7
-## 4   sci    8.5    13     Yes    8.5     Yes      8     8.5        9
-## 5 empty    6.0   975      No    6.0      No     NA      NA       NA
-## 6 empty    3.5  1350      No    3.5      No     NA      NA       NA
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3 CVGrade3
+## 1   nat    7.0   452     Yes    7.0   455     Yes      8     7.6        8
+## 2 empty    6.5   694      No    6.5   700      No     NA      NA       NA
+## 3   nat    7.5   247     Yes    7.5   248     Yes      8     7.9        7
+## 4   sci    8.5    13     Yes    8.5    13     Yes      8     8.5        9
+## 5 empty    6.0   975      No    6.0   984      No     NA      NA       NA
+## 6 empty    3.5  1350      No    3.5  1356      No     NA      NA       NA
 ##   ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
-## 1              7                8   235         20       2
+## 1              7                8   235         20     Yes
 ## 2             NA               NA    NA         NA   empty
-## 3              9                8   233         18       2
-## 4              8                8    72          8       2
+## 3              9                8   233         18     Yes
+## 4              8                8    72          8     Yes
 ## 5             NA               NA    NA         NA   empty
 ## 6             NA               NA    NA         NA   empty</code></pre>
 <pre class="r"><code>  tail(data_2015)</code></pre>
@@ -3990,20 +4048,20 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 1365     Laboratório Associado para a Química Verde - Tecnologias e Processos Limpos (REQUIMTE)
 ## 1366                                                           Centro de Matemática (CM/FCT/UC)
 ## 1367                                                     INESC Tecnologia e Ciência (INESC TEC)
-##      Panel Grade1 Rank1 Status1 Grade2 Status2 Grade3 WGrade3 CVGrade3
-## 1362 empty    4.0  1349      No    4.0      No     NA      NA       NA
-## 1363   hum    7.0   693     Yes    7.0     Yes      6     6.0        6
-## 1364   eng    7.5   451     Yes    7.5     Yes      7     6.9        7
-## 1365 empty    4.5  1332      No    4.5      No     NA      NA       NA
-## 1366 empty    6.5   973      No    6.5      No     NA      NA       NA
-## 1367 empty    6.5   974      No    6.5      No     NA      NA       NA
-##      ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
-## 1362             NA               NA    NA         NA   empty
-## 1363              6                6   689         78       1
-## 1364              7                6   485        134       1
-## 1365             NA               NA    NA         NA   empty
-## 1366             NA               NA    NA         NA   empty
-## 1367             NA               NA    NA         NA   empty</code></pre>
+##      Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 WGrade3
+## 1362 empty    4.0  1349      No    4.0  1355      No     NA      NA
+## 1363   hum    7.0   693     Yes    7.0   660     Yes      6     6.0
+## 1364   eng    7.5   451     Yes    7.5   452     Yes      7     6.9
+## 1365 empty    4.5  1332      No    4.5  1338      No     NA      NA
+## 1366 empty    6.5   973      No    6.5   978      No     NA      NA
+## 1367 empty    6.5   974      No    6.5   979      No     NA      NA
+##      CVGrade3 ResearchGrade3 CareerPlanGrade3 Rank3 PanelRank3 Status3
+## 1362       NA             NA               NA    NA         NA   empty
+## 1363        6              6                6   689         78      No
+## 1364        7              7                6   485        134      No
+## 1365       NA             NA               NA    NA         NA   empty
+## 1366       NA             NA               NA    NA         NA   empty
+## 1367       NA             NA               NA    NA         NA   empty</code></pre>
 <p>Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:</p>
 <pre class="r"><code>  sum(data_2015[!is.na(data_2015$Grade3),&quot;Grade3&quot;]-data1_stage2_xlsx_2015_global[order(data1_stage2_xlsx_2015_global$Ref),&quot;Grade5&quot;])</code></pre>
 <pre><code>## [1] 0</code></pre>
