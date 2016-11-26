@@ -1376,6 +1376,17 @@ multiplot &lt;- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 <li>Total “male-med” stage2: 25</li>
 <li>Distribution of Grade2 for this panel: No ???</li>
 </ul>
+<p><strong>Host acceptance rates</strong></p>
+<p>To analyse this we should also split by panel. Furthermore, it will be convenient to define an ID for each host. I will ID in ascending order of number of applications (or alphabetical for ties). FIX CODE NEXT!!!!!!!!!!!!!!!!!</p>
+<pre class="r"><code>  hostID2014&lt;-sort(table(data2014$Host))
+  hostID2014names &lt;- row.names(hostID2014)
+  data2014$HostID &lt;- rep(NA,dim(data2014)[1])
+  for (i in 1:length(hostID2014names)) {
+    subframe &lt;- data2014[data2014$Host == hostID2014names[i],]$Ref
+    for(candidate in subframe){
+      data2014[data2014$Ref == candidate,&quot;HostID&quot;]&lt;-hostID2014[i][[1]]
+    }
+  }</code></pre>
 </div>
 <div id="if2015-1" class="section level3">
 <h3><span class="header-section-number">2.2.3</span> IF2015</h3>
@@ -1969,6 +1980,14 @@ multiplot &lt;- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
 </div>
 <div id="statistical-analysis" class="section level1">
 <h1><span class="header-section-number">3</span> Statistical analysis</h1>
+<p><strong>TO DO:</strong></p>
+<ul>
+<li>Gender bias in panels at stage2 for 2014 and 2015:
+<ul>
+<li>Apply a t-test (given we do not know the mean and standard deviation of the underlying distribution) to the random variable “Acceptance rate”.</li>
+<li>Apply a test to the distribution of Grade6 in each panel for “male” and “female” to assess if they are drawn from the same distribution. (Mann-Whitney?)</li>
+</ul></li>
+</ul>
 <p>Examples of tests that I can make:</p>
 <ul>
 <li>In the gender analysis:

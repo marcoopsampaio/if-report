@@ -240,6 +240,8 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 <pre class="r"><code>  file1_name_2013 &lt;- &quot;2013-file1-all_candidates_before_appeal.xlsx&quot;</code></pre>
 <p>To download we call:</p>
 <pre class="r"><code>  file1_rel_path_2013 &lt;-make_data_file_download(raw_dir, sub_dir2013, file1_url_2013,file1_name_2013)</code></pre>
+<p>There is an auxiliary file that I asked from FCT with the panel information for each candidate. It is located at the relative path</p>
+<pre class="r"><code>  path_panel_info_2013 &lt;- &quot;raw_data/data_email_fct_panels/ListaCandidaturas_IF2013.xlsx&quot;</code></pre>
 <p><strong>CLEANUP</strong></p>
 <p>Now we load the file</p>
 <pre class="r"><code>  data1_xlsx_2013 &lt;- read.xlsx(file1_rel_path_2013,sheetIndex = 1,startRow = 3)[,1:4]</code></pre>
@@ -523,6 +525,81 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 ## 210      No      No   210   216
 ## 405      No      No   405   415
 ## 406      No      No   406   416</code></pre>
+<p><strong>Panel info</strong> Before exporting we will add the panel information from the auxiliary FCT file</p>
+<pre class="r"><code>  data_which_panel_2013 &lt;- read.xlsx(path_panel_info_2013,sheetIndex = 1,startRow = 1)[,1:3]
+  colnames(data_which_panel_2013)&lt;-c(&quot;Ref&quot;,&quot;Name&quot;,&quot;Panel&quot;)</code></pre>
+<p>Now we convert the panel names to a Standardized notation.</p>
+<pre class="r"><code>  sort(levels(data_which_panel_2013$Panel))</code></pre>
+<pre><code>## [1] &quot;Agricultural Sciences&quot;       &quot;Engineering and Technology&quot; 
+## [3] &quot;Exact Sciences&quot;              &quot;Humanities&quot;                 
+## [5] &quot;Medical and Health Sciences&quot; &quot;Natural Sciences&quot;           
+## [7] &quot;Social Sciences&quot;</code></pre>
+<pre class="r"><code>  levels(data_which_panel_2013$Panel) &lt;- c(&quot;env&quot;,&quot;eng&quot;,&quot;sci&quot;,&quot;hum&quot;,&quot;med&quot;,&quot;nat&quot;,&quot;soc&quot;)
+  rownames(data_2013)&lt;-c() #This just clears the row names</code></pre>
+<p>We remove the odd case also from the whic_panel info dataframe</p>
+<pre class="r"><code>  data_which_panel_2013[data_which_panel_2013$Ref==setdiff(data_which_panel_2013$Ref,data_2013$Ref),]</code></pre>
+<pre><code>##              Ref                                      Name Panel
+## 91 IF/00122/2013 Martim Afonso Ferreira de Sousa Chichorro   nat</code></pre>
+<pre class="r"><code>  data_which_panel_2013 &lt;- data_which_panel_2013[-91,] 
+  data_which_panel_2013$Ref &lt;- factor(data_which_panel_2013$Ref)
+  data_which_panel_2013$Name &lt;- factor(data_which_panel_2013$Name)
+  rownames(data_which_panel_2013)&lt;- c()</code></pre>
+<p>Now we check that everything is OK i.e. that the Ref,Name pairs are the same in both dataframes and ordered in the same way.</p>
+<pre class="r"><code>  sum(data_which_panel_2013[,c(&quot;Ref&quot;)]!=data_2013[,c(&quot;Ref&quot;)])</code></pre>
+<pre><code>## [1] 0</code></pre>
+<pre class="r"><code>  diff_names2013 &lt;-as.character(data_which_panel_2013[,c(&quot;Name&quot;)])!=as.character(data_2013[,c(&quot;Name&quot;)])
+  data.frame(data_which_panel_2013[diff_names2013,c(&quot;Name&quot;)],data_2013[diff_names2013,c(&quot;Name&quot;)])</code></pre>
+<pre><code>##    data_which_panel_2013.diff_names2013..c..Name...
+## 1                 Cláudia Barreiros Macedo de Faria
+## 2                              Uladzimir Khomchanka
+## 3                    Andrea Catalina Galvis Sánchez
+## 4                              Rafal Marcin Lukasik
+## 5              Ana Filipa Naughton Henriques Andrez
+## 6                        Carla Sofia da Silva Lopes
+## 7                Sonia Maria Almeida Guedes de Melo
+## 8                                David Cecil Cairns
+## 9               Ana Margarida Vicente Cavaco Guerra
+## 10                             Gopal Shankar Mishra
+## 11                                   Gersende Prior
+## 12                   Slavka Carvalho Andrejkovicova
+## 13                                Ivan Franco Rodil
+## 14                            Erkuden Perez Carrera
+## 15                                    Vincent Debut
+## 16                       Nancy Ann Duxbury Carreiro
+##                      data_2013.diff_names2013..c..Name...
+## 1                       Claudia Barreiros Macedo de Faria
+## 2                                     Vladimir Khomchenko
+## 3                          Andrea Catalina Galvis Sanchez
+## 4                                     Rafal Bogel-Lukasik
+## 5  Ana Filipa Naughton Henriques Andrez (Filipa Naughton)
+## 6                             Carla Sofia da Silva Liopes
+## 7                      SONIA MARIA ALMEIDA GUEDES DE MELO
+## 8                                      DAVID CECIL CAIRNS
+## 9                            Ana Margarida Vicente Cavaco
+## 10                                   GOPAL SHANKAR MISHRA
+## 11                                         PRIOR Gersende
+## 12                                  Slavka Andrejkovicova
+## 13                                      IVAN FRANCO RODIL
+## 14                                  ERKUDEN PEREZ CARRERA
+## 15                                          VINCENT DEBUT
+## 16                                      Nancy Ann Duxbury</code></pre>
+<p>We see that there are some typos in 16 names but all references match so we can just add an extra column with the panel information to the final data frame:</p>
+<pre class="r"><code>  data_2013$Panel &lt;- data_which_panel_2013$Panel
+  head(data_2013)</code></pre>
+<pre><code>##             Ref                                      Name Grade1 Grade3
+## 1 IF/00003/2013                 André Martinho De Almeida      7      7
+## 2 IF/00004/2013                    Susana de Sousa Araujo      6      6
+## 3 IF/00005/2013        Christoph Friedrich Johannes Meyer      6      6
+## 4 IF/00006/2013 Jorge Almiro Barceló Caldeira Pinto Paiva      7      7
+## 5 IF/00007/2013              Rui Miguel Macieira de Faria      6      6
+## 6 IF/00008/2013                       André Gama Oliveira      6      6
+##   Status1 Status3 Rank1 Rank3 Panel
+## 1      No      No   209   215   env
+## 2      No      No   403   413   env
+## 3      No      No   404   414   nat
+## 4      No      No   210   216   env
+## 5      No      No   405   415   nat
+## 6      No      No   406   416   sci</code></pre>
 <p><strong>EXPORT</strong> I will write all clean data in the directory:</p>
 <pre class="r"><code>  clean_data_dir &lt;- &quot;clean_data&quot;</code></pre>
 <p>For the 2013 data I will use</p>
@@ -554,6 +631,8 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 <pre class="r"><code>  file1_stage1_name_2014 &lt;- &quot;2014-file1-stage1-all_candidates_before_appeal.xlsx&quot;</code></pre>
 <p>To download we call:</p>
 <pre class="r"><code>  file1_stage1_rel_path_2014&lt;-make_data_file_download(raw_dir, sub_dir2014, file1_stage1_url_2014,file1_stage1_name_2014)</code></pre>
+<p>There is an auxiliary file that I asked from FCT with the panel information for each candidate. It is located at the relative path</p>
+<pre class="r"><code>  path_panel_info_2014 &lt;- &quot;raw_data/data_email_fct_panels/ListaCandidaturas_IF2014.xlsx&quot;</code></pre>
 <p><strong>CLEANUP</strong></p>
 <p>Now we load the file</p>
 <pre class="r"><code>  data1_stage1_xlsx_2014 &lt;- read.xlsx(file1_stage1_rel_path_2014,sheetIndex = 1,startRow = 3, endRow = 1401)[,1:5]</code></pre>
@@ -3026,6 +3105,85 @@ setwd(&quot;/home/mops2/Work/projects/IF_report/git-hub-repo-if_report/&quot;)</
 <p>Finally let us perform a check to see if the grades match between the global data frame and the panels data frames:</p>
 <pre class="r"><code>  sum(data_2014[!is.na(data_2014$Grade6),&quot;Grade6&quot;]-data3_stage2_xlsx_2014_global[order(data3_stage2_xlsx_2014_global$Ref),&quot;Grade6&quot;])</code></pre>
 <pre><code>## [1] 0</code></pre>
+<p><strong>Panel info</strong></p>
+<p>Before exporting we will add the panel information from the auxiliary FCT file</p>
+<pre class="r"><code>  data_which_panel_2014 &lt;- read.xlsx(path_panel_info_2014,sheetIndex = 1,startRow = 1)[,1:3]
+  colnames(data_which_panel_2014)&lt;-c(&quot;Ref&quot;,&quot;Name&quot;,&quot;Panel&quot;)</code></pre>
+<p>Now we convert the panel names to a Standardized notation. But before that we need to remove the candidates that are not eligible.</p>
+<pre class="r"><code>  non_eligible2014&lt;-setdiff(sort(data_which_panel_2014$Ref),sort(data_2014$Ref))
+  for(item_ref in non_eligible2014){
+    data_which_panel_2014 &lt;- data_which_panel_2014[-as.integer(rownames(data_which_panel_2014[data_which_panel_2014$Ref == item_ref,])),] 
+      rownames(data_which_panel_2014)&lt;- c()
+  }
+  data_which_panel_2014$Ref &lt;- factor(data_which_panel_2014$Ref)
+  dim(data_which_panel_2014)</code></pre>
+<pre><code>## [1] 1398    3</code></pre>
+<p>Now we check that everything is OK i.e. that the Ref,Name pairs are the same in both dataframes and ordered in the same way.</p>
+<pre class="r"><code>  sum(data_which_panel_2014[,c(&quot;Ref&quot;)]!=data_2014[,c(&quot;Ref&quot;)])</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>Next let’s check differences in cadidate names</p>
+<pre class="r"><code>  diff_names2014 &lt;-as.character(data_which_panel_2014[,c(&quot;Name&quot;)])!=as.character(data_2014[,c(&quot;Name&quot;)])
+  data.frame(data_which_panel_2014[diff_names2014,c(&quot;Name&quot;)],data_2014[diff_names2014,c(&quot;Name&quot;)])</code></pre>
+<pre><code>##   data_which_panel_2014.diff_names2014..c..Name...
+## 1                   Andrea Catalina Galvis Sánchez
+## 2                   Slavka Carvalho Andrejkovicova
+## 3                             Uladzimir Khomchanka
+## 4                          Kimberley Jane Hockings
+## 5                           JEAN AKILIMALI SUMAILI
+## 6                       Nancy Ann Duxbury Carreiro
+##   data_2014.diff_names2014..c..Name...
+## 1       Andrea Catalina Galvis Sanchez
+## 2                Slavka Andrejkovicova
+## 3                  Vladimir Khomchenko
+## 4           Dr Kimberley Jane Hockings
+## 5               SUMAILI AKILIMALI JEAN
+## 6                    Nancy Ann Duxbury</code></pre>
+<p>So all is fine. Now we can change the levels of the panel to the standard form</p>
+<pre class="r"><code>  levels(data_which_panel_2014$Panel)&lt;- c(&quot;env&quot;,&quot;eng&quot;,&quot;sci&quot;,&quot;hum&quot;,&quot;med&quot;,&quot;nat&quot;,&quot;soc&quot;)</code></pre>
+<p>Finally… we can check that the panel information that we had already worked out was correct (for the cases where we had such info):</p>
+<pre class="r"><code>  pos2014_panel_webfiles &lt;- data_2014$Panel != &quot;empty&quot;
+  setdiff(data_2014[pos2014_panel_webfiles,&quot;Panel&quot;],data_which_panel_2014[pos2014_panel_webfiles,&quot;Panel&quot;])</code></pre>
+<pre><code>## character(0)</code></pre>
+<p>So now we can just safely replace the Panel column</p>
+<pre class="r"><code>  setdiff(data_2014$Ref,data_which_panel_2014$Ref)</code></pre>
+<pre><code>## character(0)</code></pre>
+<pre class="r"><code>  data_2014$Panel &lt;-data_which_panel_2014$Panel
+  head(data_2014)</code></pre>
+<pre><code>##             Ref                                   Name
+## 1 IF/00003/2014 Luís Miguel Nunes Valente Afonso Reino
+## 2 IF/00004/2014                           Karine Serre
+## 3 IF/00006/2014                Manuel Algarra Gonzalez
+## 4 IF/00007/2014                      Adria Gil Mestres
+## 5 IF/00008/2014                    André Gama Oliveira
+## 6 IF/00009/2014              Luís Miguel Teodoro Frija
+##                                                                                 Host
+## 1 Rede de Investigação em Biodiversidade e Biologia Evolutiva (InBIO/ICETA-Porto/UP)
+## 2                                        Instituto de Medicina Molecular (IMM/FM/UL)
+## 3                                    Centro de Investigação em Química (CIQ/FCUP/UP)
+## 4                            Faculdade de Ciências da Universidade de Lisboa (FC/UL)
+## 5                                           Centro de Matemática (CM/ADFCUP/FCUP/UP)
+## 6                                         Centro de Química Estrutural (CQE/IST/UTL)
+##   Panel Grade1 Rank1 Status1 Grade2 Rank2 Status2 Grade3 Rank3 Status3
+## 1   nat    7.5   232     Yes    7.5   233     Yes    7.5   352     Yes
+## 2   med    8.0    74     Yes    8.0    74     Yes    8.0   144     Yes
+## 3   sci    6.5   698      No    6.5   703      No     NA    NA   empty
+## 4   sci    7.0   511      No    7.0   515      No     NA    NA   empty
+## 5   sci    7.0   512      No    7.0   516      No     NA    NA   empty
+## 6   sci    7.5   233     Yes    7.5   234     Yes    7.5   353     Yes
+##   Grade4 WGrade4 Rank4 PanelRank4 Status4 Grade5 WGrade5 Rank5 PanelRank5
+## 1      7     7.0   236         53 Reserve      7     7.0   237         53
+## 2      8     8.5    81          7     Yes      8     8.5    81          7
+## 3     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 4     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 5     NA      NA    NA         NA   empty     NA      NA    NA         NA
+## 6      7     6.6   237         89 Reserve      7     6.6   238         89
+##   Status5 Grade6 WGrade6 Rank6 PanelRank6 Status6
+## 1 Reserve      7     7.0   347         57 Reserve
+## 2     Yes      8     8.5   157          8     Yes
+## 3   empty     NA      NA    NA         NA   empty
+## 4   empty     NA      NA    NA         NA   empty
+## 5   empty     NA      NA    NA         NA   empty
+## 6 Reserve      7     6.6   348         91 Reserve</code></pre>
 <p><strong>EXPORT</strong> I will write all clean data in the directory:</p>
 <pre class="r"><code>  clean_data_dir &lt;- &quot;clean_data&quot;</code></pre>
 <p>For the 2014 data I will use</p>
