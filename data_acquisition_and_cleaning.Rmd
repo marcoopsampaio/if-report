@@ -2,7 +2,7 @@
 title: "Data sources and cleaning"
 output:
   html_document:
-    code_folding: show
+    code_folding: hide
     number_sections: yes
     toc: yes
   pdf_document:
@@ -1268,6 +1268,12 @@ To download  we call:
   file1_stage1_rel_path_2015 <- make_data_file_download(raw_dir, sub_dir2015, file1_stage1_url_2015,file1_stage1_name_2015)
 ```
 
+There is an auxiliary file that I asked from FCT with the panel information for each candidate. It is located at the relative path
+```{r}
+  path_panel_info_2015 <- "raw_data/data_email_fct_panels/ListaCandidaturas_IF2015.xlsx"
+```
+
+
 **CLEANUP**
 
 Now we load the file
@@ -1619,6 +1625,51 @@ Finally let us perform a check to see if the grades match between the global dat
 ```{r}
   sum(data_2015[!is.na(data_2015$Grade3),"Grade3"]-data1_stage2_xlsx_2015_global[order(data1_stage2_xlsx_2015_global$Ref),"Grade5"])
 ```
+
+**Panel info**
+
+Before exporting we will add the panel information from the auxiliary FCT file
+
+```{r}
+  data_which_panel_2015 <- read.xlsx(path_panel_info_2015,sheetIndex = 1,startRow = 1)[,1:3]
+  colnames(data_which_panel_2015)<-c("Ref","Name","Panel")
+```
+Now we convert the panel names to a Standardized notation. But before that we need to remove the candidates that are not eligible.
+
+```{r}
+  non_eligible2015<-setdiff(sort(data_which_panel_2015$Ref),sort(data_2015$Ref))
+  for(item_ref in non_eligible2015){
+    data_which_panel_2015 <- data_which_panel_2015[-as.integer(rownames(data_which_panel_2015[data_which_panel_2015$Ref == item_ref,])),] 
+      rownames(data_which_panel_2015)<- c()
+  }
+  data_which_panel_2015$Ref <- factor(data_which_panel_2015$Ref)
+  dim(data_which_panel_2015)
+```
+Now we check that everything is OK i.e. that the Ref,Name pairs are the same in both dataframes and ordered in the same way.
+```{r}
+  sum(data_which_panel_2014[,c("Ref")]!=data_2014[,c("Ref")])
+```
+Next let’s check differences in cadidate names
+```{r}
+  diff_names2015 <-as.character(data_which_panel_2015[,c("Name")])!=as.character(data_2015[,c("Name")])
+  data.frame(data_which_panel_2015[diff_names2015,c("Name")],data_2015[diff_names2015,c("Name")])
+```
+So all is fine. Now we can change the levels of the panel to the standard form
+```{r}
+  levels(data_which_panel_2015$Panel)<- c("env","eng","sci","hum","med","nat","soc")
+```
+Finally… we can check that the panel information that we had already worked out was correct (for the cases where we had such info):
+```{r}
+  pos2015_panel_webfiles <- data_2015$Panel != "empty"
+  setdiff(data_2015[pos2015_panel_webfiles,"Panel"],data_which_panel_2015[pos2015_panel_webfiles,"Panel"])
+```
+So now we can just safely replace the Panel column
+```{r}
+  setdiff(data_2015$Ref,data_which_panel_2015$Ref)
+  data_2015$Panel <-data_which_panel_2015$Panel
+  head(data_2015)
+```
+
 
 **EXPORT**
 I will write all clean data in the directory:
